@@ -30,7 +30,9 @@ def handler(event, context):
             }
         )
 
-        output_key = f"textract/{key}.textract.json"
+        filename = os.path.basename(key)
+        name, _ = os.path.splitext(filename)
+        output_key = f"textract/{name}.json"
 
         s3.put_object(
             Bucket=PROCESSED_BUCKET,

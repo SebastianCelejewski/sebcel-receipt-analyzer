@@ -1,0 +1,3 @@
+Useful commands:
+
+aws s3 sync "%%%%\scans" s3://sebcel-receipt-analyzer-raw-bucket-dev/raw/ --profile %%%%

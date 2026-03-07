@@ -26,6 +26,10 @@ def handler(event, context):
     bucket = event_record["s3"]["bucket"]["name"]
     key = urllib.parse.unquote_plus(event_record["s3"]["object"]["key"])
 
+    filename = os.path.basename(key)
+    name, _ = os.path.splitext(filename)
+    output_key = f"normalized/{name}.json"
+
     print(f"Reading Textract JSON: s3://{bucket}/{key}")
 
     response = s3.get_object(
@@ -34,10 +38,11 @@ def handler(event, context):
     )
 
     textract_data = json.loads(response["Body"].read())
-    docs = textract_data.get("ExpenseDocuments", [])
-    blocks = textract_data.get("Blocks", [])
-
-    receipt_id = build_receipt_id(docs, blocks)
+    
+    docs = textract_data.get("ExpenseDocuments") or []
+    blocks = textract_data.get("Blocks") or []
+    
+    receipt_id = build_receipt_id(docs, blocks, name)
     store = normalize_store(extract_store(docs))
 
     items = []
@@ -45,11 +50,11 @@ def handler(event, context):
     for doc in docs:
         for group in doc.get("LineItemGroups", []):
             for item in group.get("LineItems", []):
-                line = {}
-                for field in item.get("LineItemExpenseFields", []):
-                    field_type = field.get("Type", {}).get("Text")
-                    value = field.get("ValueDetection", {}).get("Text")
-                    line[field_type] = value
+                line = {
+                    field.get("Type", {}).get("Text"):
+                    field.get("ValueDetection", {}).get("Text")
+                    for field in item.get("LineItemExpenseFields", [])
+                }
 
                 if not is_product(line):
                     continue
@@ -65,6 +70,7 @@ def handler(event, context):
 
                 normalized = {
                     "receipt_id": receipt_id,
+                    "source_file": filename,
                     "store": store,
                     "product": line.get("ITEM"),
                     "quantity": quantity,
@@ -78,29 +84,30 @@ def handler(event, context):
     print(json.dumps(items, indent=2))
 
     total = extract_total(docs)
-    date = extract_date(docs)
+    date = extract_date(docs) or extract_date_from_text(blocks)
 
     # fallback dla paragonów bez pozycji (np. autostrada)
     if len(items) == 0:
         if total:
             items.append({
                 "receipt_id": receipt_id,
+                "source_file": filename,
                 "store": store,
                 "product": "nieokreślony produkt lub usługa",
                 "quantity": 1,
                 "unit_price": total,
                 "total": total
-            })    
+            })
 
     result = {
         "receipt_id": receipt_id,
+        "source_file": filename,
         "store": store,
         "date": date,
         "total": total,
         "items": items
     }
 
-    output_key = key.replace("textract", "normalized")
     print(f"Saving normalized data: {output_key}")
 
     s3.put_object(
@@ -137,6 +144,7 @@ def normalize_price(value):
 
     value = value.replace(",", ".")
     value = value.replace("C", "")
+    value = value.strip()
 
     try:
         return float(value)
@@ -213,7 +221,7 @@ def normalize_store(name):
 
     return name
 
-def build_receipt_id(docs, blocks):
+def build_receipt_id(docs, blocks, name):
 
     date = None
     time = None
@@ -238,20 +246,31 @@ def build_receipt_id(docs, blocks):
     if not number:
         number = extract_receipt_number_from_text(blocks)
 
-    if date and time and number:
-        time = time.replace(":", "-")
-        return f"{date}_{time}_{number}"
-
-    return None
+    return f"{date}_{time}_{number}__{name}"
 
 def extract_receipt_number_from_text(blocks):
 
+    patterns = [
+        r"\bnr\.?\s*[:#]?\s*(\d+)",
+        r"\bparagon\s*nr\.?\s*(\d+)",
+    ]
+
     for block in blocks:
-        if block.get("BlockType") == "LINE":
-            text = block.get("Text", "")
-            m = re.search(r"\bnr[^0-9]*(\d+)", text.lower())
+
+        if block.get("BlockType") != "LINE":
+            continue
+
+        text = block.get("Text", "").lower()
+
+        # próba regexów
+        for pattern in patterns:
+            m = re.search(pattern, text)
             if m:
                 return m.group(1)
+
+        # fallback: linia z samymi cyframi
+        if re.fullmatch(r"\d{4,}", text.strip()):
+            return text.strip()
 
     return None
 
@@ -280,3 +299,17 @@ def extract_date(docs):
                 return value
 
     return None
+
+def extract_date_from_text(blocks):
+
+    for block in blocks:
+        if block.get("BlockType") != "LINE":
+            continue
+
+        text = block.get("Text", "")
+
+        m = re.search(r"\b(20\d\d[-./]\d\d[-./]\d\d)\b", text)
+        if m:
+            return m.group(1)
+
+    return None    

@@ -8,8 +8,17 @@ import os
 s3 = boto3.client("s3")
 
 PROCESSED_BUCKET = os.environ["PROCESSED_BUCKET"]
-CSV_KEY = "exports/expenses.csv"
 
+CSV_COLUMNS = [
+    "receipt_id",
+    "source_file",
+    "date",
+    "store",
+    "product",
+    "quantity",
+    "unit_price",
+    "total"
+]
 
 def handler(event, context):
 
@@ -20,6 +29,9 @@ def handler(event, context):
 
     bucket = record["s3"]["bucket"]["name"]
     key = urllib.parse.unquote_plus(record["s3"]["object"]["key"])
+    filename = os.path.basename(key)
+    name, _ = os.path.splitext(filename)
+    output_key = f"exports/receipts/{name}.csv"
 
     print(f"Reading normalized JSON: s3://{bucket}/{key}")
 
@@ -32,6 +44,7 @@ def handler(event, context):
     for item in receipt.get("items", []):
         rows.append([
             receipt.get("receipt_id"),
+            receipt.get("source_file"),
             receipt.get("date"),
             receipt.get("store"),
             item.get("product"),
@@ -44,24 +57,15 @@ def handler(event, context):
 
     writer = csv.writer(csv_buffer)
 
-    writer.writerow([
-        "receipt_id",
-        "date",
-        "store",
-        "product",
-        "quantity",
-        "unit_price",
-        "total"
-    ])
-
+    writer.writerow(CSV_COLUMNS)
     writer.writerows(rows)
 
-    print(f"Writing CSV: {CSV_KEY}")
+    print(f"Writing CSV: {output_key}")
 
     s3.put_object(
         Bucket=PROCESSED_BUCKET,
-        Key=CSV_KEY,
-        Body=csv_buffer.getvalue(),
+        Key=output_key,
+        Body=csv_buffer.getvalue().encode("utf-8-sig"),
         ContentType="text/csv"
     )
 

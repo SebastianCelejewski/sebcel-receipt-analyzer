@@ -1,0 +1,9 @@
+# Speedrun 1, 2026-03-07
+
+13:45 Start
+14:41 Terraform state deployed to AWS
+15:25 OCR using AWS Textract is working (.jpeg in S3 -> Textract -> .json in S3)
+16:18 First version of normalization is working (.json in S3 -> normalization -> .json in S3)
+17:35 Good enough version of normalization is ready, first version of export to CSV is working
+18:26 Good enough version of export to CSV is ready, CSV files for sample receipts loaded to Excel
+19:24 Final amendments, end
