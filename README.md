@@ -128,3 +128,112 @@ Future improvements may include:
 - mobile application
 - product database and normalization dictionary
 - duplicate receipt detection
+
+---
+
+# AWS Resource Naming and Tagging Conventions
+
+This project uses consistent naming and tagging conventions for all AWS resources to ensure clarity, maintainability, and proper cost attribution.
+
+---
+
+## Resource Naming Convention
+
+All AWS resources follow the format:
+
+sebcel-receipt-analyzer-<component>-<resource>-<environment>
+
+
+### Components
+
+| Part | Description | Example |
+|-----|-------------|--------|
+| project | Project identifier | `sebcel-receipt-analyzer` |
+| component | Logical system component | `ingest`, `parser`, `export`, `storage` |
+| resource | Type of AWS resource | `function`, `bucket`, `role` |
+| environment | Deployment environment | `dev`, `test`, `prod` |
+
+---
+
+### Examples
+
+#### Lambda functions
+
+sebcel-receipt-analyzer-ingest-function-dev
+sebcel-receipt-analyzer-parser-function-dev
+sebcel-receipt-analyzer-export-function-dev
+
+#### S3 buckets
+
+sebcel-receipt-analyzer-raw-bucket-dev
+sebcel-receipt-analyzer-processed-bucket-dev
+
+#### IAM roles
+
+sebcel-receipt-analyzer-lambda-role-dev
+
+
+---
+
+## AWS Tagging Convention
+
+All resources must include the following tags.
+
+| Tag | Purpose |
+|----|--------|
+| `Name` | Human-readable resource name |
+| `application` | Used for cost allocation and grouping |
+| `environment` | Deployment environment (`dev`, `test`, `prod`) |
+| `owner` | Resource owner |
+| `managed-by` | Indicates infrastructure management tool |
+
+---
+
+### Standard Tag Set
+
+Name = <resource-name>
+application = sebcel-receipt-analyzer
+environment = <environment>
+owner = Sebastian.Celejewski@wp.pl
+managed-by = terraform
+
+
+Example:
+
+Name = sebcel-receipt-analyzer-ingest-function-dev
+application = sebcel-receipt-analyzer
+environment = dev
+owner = Sebastian.Celejewski@wp.pl
+
+managed-by = terraform
+
+
+---
+
+## Terraform Implementation
+
+To ensure consistency, Terraform uses centralized variables and locals.
+
+Example:
+
+```hcl
+locals {
+  project = "sebcel-receipt-analyzer"
+
+  common_tags = {
+    application = local.project
+    environment = var.environment
+    owner       = "Sebastian.Celejewski@wp.pl"
+    managed-by  = "terraform"
+  }
+}
+
+Notes
+
+S3 bucket names must be globally unique within AWS.
+
+The project prefix sebcel- is used to help ensure uniqueness.
+
+All infrastructure is managed using Terraform.
+
+These conventions should be applied consistently across all AWS resources.
