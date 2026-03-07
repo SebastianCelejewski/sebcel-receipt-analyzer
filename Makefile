@@ -1,4 +1,4 @@
-.PHONY: setup install format lint check test pipeline-local infra-init infra-plan infra-apply infra-destroy package-lambdas deploy clean clean-all help
+.PHONY: setup install format lint check test pipeline-local infra-init infra-plan infra-apply infra-destroy package-functions deploy clean clean-all help
 
 PYTHON=python
 VENV=.venv
@@ -43,13 +43,13 @@ infra-apply:
 infra-destroy:
 	cd $(INFRA_DIR) && terraform destroy
 
-package-lambdas:
+package-functions:
 	mkdir -p $(BUILD_DIR)
-	cd backend/lambdas/textract_analyzer && zip -r ../../../$(BUILD_DIR)/textract_analyzer.zip .
-	cd backend/lambdas/receipt_normalizer && zip -r ../../../$(BUILD_DIR)/receipt_normalizer.zip .
-	cd backend/lambdas/csv_exporter && zip -r ../../../$(BUILD_DIR)/csv_exporter.zip .
+	cd backend/functions/textract_analyzer && zip -r ../../../$(BUILD_DIR)/textract_analyzer.zip .
+	cd backend/functions/receipt_normalizer && zip -r ../../../$(BUILD_DIR)/receipt_normalizer.zip .
+	cd backend/functions/csv_exporter && zip -r ../../../$(BUILD_DIR)/csv_exporter.zip .
 
-deploy: package-lambdas infra-apply
+deploy: package-functions infra-apply
 
 clean:
 	rm -rf $(BUILD_DIR)
@@ -73,7 +73,7 @@ help:
 	@echo "  make infra-plan"
 	@echo "  make infra-apply"
 	@echo "  make infra-destroy"
-	@echo "  make package-lambdas"
+	@echo "  make package-functions"
 	@echo "  make deploy"
 	@echo "  make clean"
 	@echo "  make clean-all"
