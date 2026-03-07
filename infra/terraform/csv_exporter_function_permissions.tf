@@ -1,6 +1,6 @@
-resource "aws_iam_role" "receipt_normalizer_function_role" {
+resource "aws_iam_role" "csv_exporter_function_role" {
 
-  name = "${local.project}-receipt-normalizer-function-role-${var.environment}"
+  name = "${local.project}-csv-exporter-function-role-${var.environment}"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -18,19 +18,19 @@ resource "aws_iam_role" "receipt_normalizer_function_role" {
   tags = merge(
     local.common_tags,
     {
-      Name = "${local.project}-receipt-normalizer-function-role-${var.environment}"
+      Name = "${local.project}-csv-exporter-function-role-${var.environment}"
     }
   )
 }
 
-resource "aws_iam_role_policy_attachment" "receipt_normalizer_function_policy_attachment_basic_logs" {
-  role       = aws_iam_role.receipt_normalizer_function_role.name
+resource "aws_iam_role_policy_attachment" "csv_exporter_function_policy_attachment_basic_logs" {
+  role       = aws_iam_role.csv_exporter_function_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-resource "aws_iam_role_policy" "receipt_normalizer_function_policy" {
-  name = "${local.project}-receipt-normalizer-function-policy-${var.environment}"
-  role = aws_iam_role.receipt_normalizer_function_role.id
+resource "aws_iam_role_policy" "csv_exporter_function_policy" {
+  name = "${local.project}-csv-exporter-function-policy-${var.environment}"
+  role = aws_iam_role.csv_exporter_function_role.id
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [

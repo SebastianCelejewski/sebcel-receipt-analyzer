@@ -30,7 +30,7 @@ def handler(event, context):
             }
         )
 
-        output_key = f"textract/{key}.json"
+        output_key = f"textract/{key}.textract.json"
 
         s3.put_object(
             Bucket=PROCESSED_BUCKET,
