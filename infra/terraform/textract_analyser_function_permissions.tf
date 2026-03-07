@@ -1,6 +1,6 @@
-resource "aws_iam_role" "lambda_role" {
+resource "aws_iam_role" "textract_analyzer_function_role" {
 
-  name = "${local.project}-lambda-role-${var.environment}"
+  name = "${local.project}-textract-analyzer-function-role-${var.environment}"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -18,19 +18,19 @@ resource "aws_iam_role" "lambda_role" {
   tags = merge(
     local.common_tags,
     {
-      Name = "${local.project}-lambda-role-${var.environment}"
+      Name = "${local.project}-textract-analyzer-function-role-${var.environment}"
     }
   )
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_basic_logs" {
-  role       = aws_iam_role.lambda_role.name
+resource "aws_iam_role_policy_attachment" "textract_analyser_function_policy_attachment_basic_logs" {
+  role       = aws_iam_role.textract_analyzer_function_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-resource "aws_iam_role_policy" "lambda_receipt_pipeline" {
-  name = "${local.project}-lambda-receipt-policy-${var.environment}"
-  role = aws_iam_role.lambda_role.id
+resource "aws_iam_role_policy" "textract_analyser_function_policy" {
+  name = "${local.project}-textract-analyser-function-policy-${var.environment}"
+  role = aws_iam_role.textract_analyzer_function_role.id
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
