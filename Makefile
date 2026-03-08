@@ -48,6 +48,7 @@ package-functions:
 	cd backend/functions/textract_analyzer && zip -r ../../../$(BUILD_DIR)/textract_analyzer.zip .
 	cd backend/functions/receipt_normalizer && zip -r ../../../$(BUILD_DIR)/receipt_normalizer.zip .
 	cd backend/functions/csv_exporter && zip -r ../../../$(BUILD_DIR)/csv_exporter.zip .
+	cd backend/functions/upload_url_generator && zip -r ../../../$(BUILD_DIR)/upload_url_generator.zip .
 
 deploy: package-functions infra-apply
 
