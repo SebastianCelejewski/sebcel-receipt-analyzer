@@ -33,8 +33,16 @@ video {
 
 #status {
   position: absolute;
-  top: 20px;
+  top: 40px;
   width: 100%;
   text-align: center;
+  color: white;
+}
+
+#version {
+  position: absolute;
+  top: 0px;
+  width: 100%;
+  text-align: left;
   color: white;
 }

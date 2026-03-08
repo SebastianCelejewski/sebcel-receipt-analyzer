@@ -10,11 +10,12 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 
-<body onload="initAuth(); startCamera();">
+<body onload="initAuth(); loadVersion(); startCamera();">
   <div class="app">
     <video id="camera" autoplay playsinline></video>
     <button class="shutter" onclick="takePhoto()">●</button>
     <canvas id="canvas"></canvas>
+    <div id="version"></div>
     <div id="status"></div>
   </div>
   <script src="app.js"></script>

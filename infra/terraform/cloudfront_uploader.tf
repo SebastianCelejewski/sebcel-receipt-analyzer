@@ -12,7 +12,7 @@ resource "aws_cloudfront_distribution" "uploader" {
     target_origin_id = "uploader-s3-origin"
     viewer_protocol_policy = "redirect-to-https"
 
-    allowed_methods = ["GET", "HEAD"]
+    allowed_methods = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
 
     cached_methods = ["GET","HEAD"]
 

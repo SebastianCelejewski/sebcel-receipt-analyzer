@@ -79,7 +79,14 @@ async function uploadBlob(blob) {
       }
     )
 
+    if (response.status === 401) {
+      localStorage.removeItem("access_token")
+      window.location.reload()
+      return
+    }
+
     const uploadData = await response.json()
+
     const uploadResponse = await fetch(uploadData.upload_url,
       {
         method: "PUT",
@@ -91,7 +98,8 @@ async function uploadBlob(blob) {
         }
       })
 
-    console.log("S3 status:", uploadResponse.status)
+    const text = await uploadResponse.text()
+
     if (!uploadResponse.ok) {
       const text = await uploadResponse.text()
       console.error("Błąd przesyłania skanu: ", text)
@@ -104,5 +112,11 @@ async function uploadBlob(blob) {
   catch (err) {
     status.innerText = "Błąd przesyłania skanu"
   }
+}
 
+async function loadVersion() {
+  const response = await fetch("version.json")
+  const data = await response.json()
+
+  document.getElementById("version").innerText = "Version: " + data.version
 }

@@ -32,6 +32,8 @@ def handler(event, context):
         ExpiresIn=300
     )
 
+    print("Upload URL:", url)
+
     return {
         "statusCode": 200,
         "headers": {
@@ -41,7 +43,7 @@ def handler(event, context):
         "body": json.dumps({
             "upload_url": url,
             "key": key,
-            "user": user
+            "user": email
         })
     }
 

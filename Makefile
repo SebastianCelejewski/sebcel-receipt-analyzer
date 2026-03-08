@@ -12,6 +12,13 @@ BUILD_DIR=build
 PWA_BUCKET = sebcel-receipt-analyzer-uploader-dev
 PWA_DIR = frontend/pwa
 
+VERSION_BASE=0.1.11
+BUILD_TIME=$(shell date +"%Y-%m-%d_%H-%M-%S")
+VERSION=$(VERSION_BASE).$(BUILD_TIME)
+
+build-version:
+	echo '{ "version": "$(VERSION)" }' > frontend/pwa/version.json
+
 setup:
 	$(PYTHON) -m venv $(VENV)
 	$(VENV_PIP) install -r requirements.txt
@@ -53,7 +60,7 @@ package-functions:
 	cd backend/functions/csv_exporter && zip -r ../../../$(BUILD_DIR)/csv_exporter.zip .
 	cd backend/functions/upload_url_generator && zip -r ../../../$(BUILD_DIR)/upload_url_generator.zip .
 
-deploy-pwa:
+deploy-pwa: build-version
 	aws s3 sync $(PWA_DIR) s3://$(PWA_BUCKET) \
 		--delete \
 		--exclude "*.html"
