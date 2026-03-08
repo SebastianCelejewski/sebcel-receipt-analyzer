@@ -31,15 +31,43 @@ function initAuth() {
   }
 }
 
-async function uploadReceipt() {
-  const file = document.getElementById("photo").files[0]
+function logout() {
+  const logoutUrl = `${COGNITO_DOMAIN}/logout` +
+    `?client_id=${CLIENT_ID}` +
+    `&logout_uri=${encodeURIComponent(REDIRECT_URI)}`
+  window.location.href = logoutUrl
+}
 
-  if (!file) return
+async function startCamera() {
+  try {
+    const stream =
+      await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: "environment"
+        }
+      })
 
+    const video = document.getElementById("camera")
+    video.srcObject = stream
+  }
+  catch (err) {
+    console.error(err)
+  }
+}
+
+async function takePhoto() {
+  const video = document.getElementById("camera")
+  const canvas = document.getElementById("canvas")
+  canvas.width = video.videoWidth
+  canvas.height = video.videoHeight
+  const ctx = canvas.getContext("2d")
+  ctx.drawImage(video, 0, 0)
+  canvas.toBlob(uploadBlob, "image/jpeg", 0.9)
+}
+
+async function uploadBlob(blob) {
   const status = document.getElementById("status")
-
-  status.innerText = "Uploading receipt..."
-
+  status.innerText = "Wysyłam skan paragonu..."
   try {
     const response = await fetch(
       API_URL + "/receipts/upload-url",
@@ -52,27 +80,20 @@ async function uploadReceipt() {
     )
 
     const uploadData = await response.json()
-
     await fetch(uploadData.upload_url,
       {
         method: "PUT",
-        body: file,
+        body: blob,
         headers: {
           "Content-Type": "image/jpeg"
         }
       })
 
-    status.innerText = "Receipt uploaded ✔"
-  }
-  catch (error) {
-    status.innerText = "Upload failed"
-  }
-}
+    status.innerText = "Skan wysłany ✔"
 
+  }
+  catch (err) {
+    status.innerText = "Błąd przesyłania skanu"
+  }
 
-function logout() {
-  const logoutUrl = `${COGNITO_DOMAIN}/logout` +
-    `?client_id=${CLIENT_ID}` +
-    `&logout_uri=${encodeURIComponent(REDIRECT_URI)}`
-  window.location.href = logoutUrl
 }
