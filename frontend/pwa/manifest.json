@@ -1,6 +1,6 @@
 {
-  "name": "Receipt Scanner",
-  "short_name": "Receipts",
+  "name": "Skaner paragonów",
+  "short_name": "Skaner paragonów",
   "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#ffffff",
