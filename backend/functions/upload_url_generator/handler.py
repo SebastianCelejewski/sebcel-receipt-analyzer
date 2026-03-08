@@ -2,20 +2,29 @@ import json
 import boto3
 import os
 import uuid
+from datetime import datetime
 
 s3 = boto3.client("s3")
 BUCKET = os.environ["RAW_BUCKET"]
 
 def handler(event, context):
 
-    key = f"uploads/{uuid.uuid4()}.jpg"
+    claims = event["requestContext"]["authorizer"]["jwt"]["claims"]
+    email = claims.get("email", "unknown")
+    user = email.split("@")[0].replace(".", "_")
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    key = f"uploads/{user}_{timestamp}_{uuid.uuid4().hex}.jpg"
 
     url = s3.generate_presigned_url(
         ClientMethod="put_object",
         Params={
             "Bucket": BUCKET,
             "Key": key,
-            "ContentType": "image/jpeg"
+            "ContentType": "image/jpeg",
+            "Metadata": {
+                "user": email,
+                "source": "pwa"
+            }
         },
         ExpiresIn=300
     )
@@ -28,6 +37,7 @@ def handler(event, context):
         },
         "body": json.dumps({
             "upload_url": url,
-            "key": key
+            "key": key,
+            "user": user
         })
     }

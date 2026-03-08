@@ -1,3 +1,6 @@
+from datetime import datetime
+import uuid
+
 const API_URL = "https://o5q4idu74k.execute-api.eu-central-1.amazonaws.com"
 const COGNITO_DOMAIN = "https://sebcel-receipt-analyzer-dev.auth.eu-central-1.amazoncognito.com"
 const CLIENT_ID = "3bdji5q53j3gbg2cbcrtlam7p9"
@@ -85,7 +88,9 @@ async function uploadBlob(blob) {
         method: "PUT",
         body: blob,
         headers: {
-          "Content-Type": "image/jpeg"
+          "Content-Type": "image/jpeg",
+          "x-amz-meta-user": uploadData.user,
+          "x-amz-meta-source": "pwa"
         }
       })
 

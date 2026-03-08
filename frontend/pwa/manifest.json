@@ -2,6 +2,7 @@
   "name": "Skaner paragonów",
   "short_name": "Skaner paragonów",
   "start_url": "/index.html",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000"

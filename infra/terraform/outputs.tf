@@ -30,3 +30,6 @@ output "processed_bucket" {
   value = aws_s3_bucket.processed_receipts.id
 }
 
+output "cloudfront_distribution_id" {
+  value = aws_cloudfront_distribution.uploader.id
+}
