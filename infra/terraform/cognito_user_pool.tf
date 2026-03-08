@@ -31,6 +31,26 @@ resource "aws_cognito_user_pool_client" "pwa_client" {
     "ALLOW_REFRESH_TOKEN_AUTH",
     "ALLOW_USER_SRP_AUTH"
   ]
+
+  callback_urls = [
+    local.uploader_url
+  ]
+
+  logout_urls = [
+    local.uploader_url
+  ]
+  
+  allowed_oauth_flows_user_pool_client = true
+
+  allowed_oauth_flows = [
+    "implicit"
+  ]
+
+  allowed_oauth_scopes = [
+    "email",
+    "openid",
+    "profile"
+  ]
 }
 
 resource "aws_cognito_user_pool_domain" "receipt_domain" {

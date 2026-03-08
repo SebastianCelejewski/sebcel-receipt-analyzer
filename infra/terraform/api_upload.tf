@@ -2,6 +2,25 @@ resource "aws_apigatewayv2_api" "receipt_api" {
   name          = "${local.project}-api-${var.environment}"
   protocol_type = "HTTP"
 
+  cors_configuration {
+
+    allow_origins = [
+      "http://${local.project}-uploader-${var.environment}.s3-website.eu-central-1.amazonaws.com"
+    ]
+
+    allow_methods = [
+      "POST",
+      "OPTIONS"
+    ]
+
+    allow_headers = [
+      "authorization",
+      "content-type"
+    ]
+
+    max_age = 3600
+  }
+
   tags = merge(
     local.common_tags,
     {

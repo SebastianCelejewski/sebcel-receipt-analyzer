@@ -10,6 +10,27 @@ resource "aws_s3_bucket" "raw_receipts" {
   )
 }
 
+resource "aws_s3_bucket_cors_configuration" "raw_receipts" {
+  bucket = aws_s3_bucket.raw_receipts.id
+
+  cors_rule {
+    allowed_methods = [
+      "PUT"
+    ]
+    allowed_origins = [
+      "*"
+    ]
+    allowed_headers = [
+      "*"
+    ]
+    expose_headers = [
+      "ETag"
+    ]
+
+    max_age_seconds = 3600
+  }
+}
+
 resource "aws_lambda_permission" "textract_analyzer_function_permission" {
   statement_id  = "AllowExecutionFromS3"
   action        = "lambda:InvokeFunction"

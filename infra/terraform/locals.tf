@@ -10,4 +10,6 @@ locals {
     managed-by  = "terraform"
   }
 
+  uploader_url = "https://${aws_cloudfront_distribution.uploader.domain_name}"
+
 }

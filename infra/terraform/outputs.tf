@@ -1,9 +1,9 @@
-output "raw_bucket" {
-  value = aws_s3_bucket.raw_receipts.id
+output "pwa_url" {
+  value = local.uploader_url
 }
 
-output "processed_bucket" {
-  value = aws_s3_bucket.processed_receipts.id
+output "uploader_website_url" {
+  value = aws_s3_bucket_website_configuration.uploader.website_endpoint
 }
 
 output "receipt_api_url" {
@@ -21,3 +21,12 @@ output "cognito_client_id" {
 output "cognito_login_domain" {
   value = aws_cognito_user_pool_domain.receipt_domain.domain
 }
+
+output "raw_bucket" {
+  value = aws_s3_bucket.raw_receipts.id
+}
+
+output "processed_bucket" {
+  value = aws_s3_bucket.processed_receipts.id
+}
+
