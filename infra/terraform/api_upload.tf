@@ -5,7 +5,7 @@ resource "aws_apigatewayv2_api" "receipt_api" {
   cors_configuration {
 
     allow_origins = [
-      "http://${local.project}-uploader-${var.environment}.s3-website.eu-central-1.amazonaws.com"
+      local.uploader_url
     ]
 
     allow_methods = [

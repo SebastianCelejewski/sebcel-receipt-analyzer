@@ -39,7 +39,7 @@ resource "aws_cognito_user_pool_client" "pwa_client" {
   logout_urls = [
     local.uploader_url
   ]
-  
+
   allowed_oauth_flows_user_pool_client = true
 
   allowed_oauth_flows = [
@@ -50,6 +50,10 @@ resource "aws_cognito_user_pool_client" "pwa_client" {
     "email",
     "openid",
     "profile"
+  ]
+
+   supported_identity_providers = [
+    "COGNITO"
   ]
 }
 

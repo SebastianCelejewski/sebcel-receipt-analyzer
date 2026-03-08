@@ -1,24 +1,33 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-
-<meta charset="utf-8">
-
-<title>Receipt Scanner</title>
-
-<link rel="manifest" href="manifest.json">
-
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Receipt Scanner</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 
-<body onload="ensureLoggedIn()">
+<body onload="initAuth()">
+  <div class="app">
+    <div class="card">
+      <h1>📷 Receipt Scanner</h1>
 
-<h2>Receipt uploader</h2>
+      <button class="camera-button"
+        onclick="document.getElementById('photo').click()">
+        Take photo
+      </button>
 
-<input type="file" accept="image/*" capture="environment" id="photo">
+      <input
+        type="file"
+         accept="image/*"
+        capture
+        id="photo"
+        onchange="uploadReceipt()">
 
-<button onclick="uploadReceipt()">Upload receipt</button>
-
-<script src="app.js"></script>
-
+      <div id="status" class="status"></div>
+    </div>
+  </div>
+  <script src="app.js"></script>
 </body>
 </html>
