@@ -1,6 +1,3 @@
-from datetime import datetime
-import uuid
-
 const API_URL = "https://o5q4idu74k.execute-api.eu-central-1.amazonaws.com"
 const COGNITO_DOMAIN = "https://sebcel-receipt-analyzer-dev.auth.eu-central-1.amazoncognito.com"
 const CLIENT_ID = "3bdji5q53j3gbg2cbcrtlam7p9"
@@ -83,7 +80,7 @@ async function uploadBlob(blob) {
     )
 
     const uploadData = await response.json()
-    await fetch(uploadData.upload_url,
+    const uploadResponse = await fetch(uploadData.upload_url,
       {
         method: "PUT",
         body: blob,
@@ -93,6 +90,13 @@ async function uploadBlob(blob) {
           "x-amz-meta-source": "pwa"
         }
       })
+
+    console.log("S3 status:", uploadResponse.status)
+    if (!uploadResponse.ok) {
+      const text = await uploadResponse.text()
+      console.error("Błąd przesyłania skanu: ", text)
+      throw new Error("Upload failed")
+    }
 
     status.innerText = "Skan wysłany ✔"
 
