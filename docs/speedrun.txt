@@ -1,4 +1,5 @@
 # Speedrun 1, 2026-03-07
+## Goal: Creation of the backend part
 
 13:45 Start
 14:41 Terraform state deployed to AWS
@@ -7,3 +8,15 @@
 17:35 Good enough version of normalization is ready, first version of export to CSV is working
 18:26 Good enough version of export to CSV is ready, CSV files for sample receipts loaded to Excel
 19:24 Final amendments, end
+
+# Speedrun 2, 2026-03-08
+## Goal: Creation of the frontend part
+14:55  Start
+15:19  First version of backend for receipt scans upload is ready
+16:47  Cognito login screen is working
+16:52  Authentication process is working fine
+17:37  Frontend works as an HTML page, the whole flow is implemented
+18:30  Frontend works as a PWA on mobile phones, added metadata to objects uploaded to S3
+19:17  User tests started (my wife was the tester)
+19:29  User tests completed
+19:40  Data from receipt scanned on mobile phone appear in Excel
