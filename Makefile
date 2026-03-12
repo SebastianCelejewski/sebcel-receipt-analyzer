@@ -64,7 +64,8 @@ package-functions:
 deploy-pwa: build-version
 	aws s3 sync $(PWA_DIR) s3://$(PWA_BUCKET) \
 		--delete \
-		--exclude "*.html"
+		--exclude "*.html" \
+		--cache-control "no-cache"
 
 	aws s3 sync $(PWA_DIR) s3://$(PWA_BUCKET) \
 		--exclude "*" \

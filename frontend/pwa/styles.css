@@ -17,10 +17,38 @@ video {
   object-fit: cover;
 }
 
-.shutter {
+#torchBtn {
   position: absolute;
   bottom: 30px;
-  left: 50%;
+  left: 33%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 6px solid white;
+  background: red;
+  font-size: 30px;
+  color: white;
+}
+
+#captureBtn {
+  position: absolute;
+  bottom: 30px;
+  left: 66%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 6px solid white;
+  background: red;
+  font-size: 30px;
+  color: white;
+}
+
+#closeBtn {
+  position: absolute;
+  bottom: 30px;
+  left: 75%;
   transform: translateX(-50%);
   width: 80px;
   height: 80px;

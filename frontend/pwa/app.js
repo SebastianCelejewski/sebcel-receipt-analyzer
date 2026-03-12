@@ -4,6 +4,8 @@ const CLIENT_ID = "3bdji5q53j3gbg2cbcrtlam7p9"
 const REDIRECT_URI = "https://d1h1goxzgdb2gs.cloudfront.net"
 
 let accessToken = null
+let videoStream = null
+let torchEnabled = false
 
 function initAuth() {
 
@@ -40,19 +42,41 @@ function logout() {
 
 async function startCamera() {
   try {
-    const stream =
-      await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: "environment"
-        }
-      })
+    videoStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: "environment"
+      }
+    })
 
     const video = document.getElementById("camera")
-    video.srcObject = stream
+    video.srcObject = videoStream
+
   }
   catch (err) {
     console.error(err)
   }
+}
+
+async function toggleTorch() {
+
+  if (!videoStream) return
+
+  const track = videoStream.getVideoTracks()[0]
+  const capabilities = track.getCapabilities()
+
+  if (!capabilities.torch) {
+    alert("Latarka niedostępna")
+    return
+  }
+
+  torchEnabled = !torchEnabled
+
+  await track.applyConstraints({
+    advanced: [{ torch: torchEnabled }]
+  })
+
+  document.getElementById("torchBtn").innerText =
+    torchEnabled ? "🔦 ON" : "🔦 OFF"
 }
 
 async function takePhoto() {
@@ -119,4 +143,17 @@ async function loadVersion() {
   const data = await response.json()
 
   document.getElementById("version").innerText = "Version: " + data.version
+}
+
+async function closeApp() {
+  if (videoStream) {
+    const tracks = videoStream.getTracks()
+    tracks.forEach(track => track.stop())
+    videoStream = null
+  }
+
+  document.getElementById("camera").srcObject = null
+
+  const status = document.getElementById("status")
+  status.innerText = "Aplikacja zatrzymana. Możesz zamknąć okno."
 }
