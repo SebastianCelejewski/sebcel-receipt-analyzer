@@ -59,10 +59,13 @@ async function startCamera() {
 
 async function toggleTorch() {
 
+  alert("Toggle torch")
   if (!videoStream) return
 
   const track = videoStream.getVideoTracks()[0]
   const capabilities = track.getCapabilities()
+
+  alert("Hopsa")
 
   // if (!capabilities.torch) {
   //   alert("Latarka niedostępna")
@@ -70,6 +73,7 @@ async function toggleTorch() {
   // }
 
   torchEnabled = !torchEnabled
+  alert("Torch enabled: " + torchEnabled)
 
   await track.applyConstraints({
     advanced: [{ torch: torchEnabled }]
