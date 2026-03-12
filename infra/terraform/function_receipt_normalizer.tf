@@ -25,9 +25,7 @@ resource "aws_lambda_function" "receipt_normalizer_function" {
 }
 
 resource "aws_iam_role" "receipt_normalizer_function_role" {
-
   name = "${local.project}-receipt-normalizer-function-role-${var.environment}"
-
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -40,7 +38,6 @@ resource "aws_iam_role" "receipt_normalizer_function_role" {
       }
     ]
   })
-
   tags = merge(
     local.common_tags,
     {

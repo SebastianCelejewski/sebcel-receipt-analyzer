@@ -59,6 +59,7 @@ package-functions:
 	cd backend/functions/receipt_normalizer && zip -r ../../../$(BUILD_DIR)/receipt_normalizer.zip .
 	cd backend/functions/csv_exporter && zip -r ../../../$(BUILD_DIR)/csv_exporter.zip .
 	cd backend/functions/upload_url_generator && zip -r ../../../$(BUILD_DIR)/upload_url_generator.zip .
+	cd backend/functions/receipt_mailer && zip -r ../../../$(BUILD_DIR)/receipt_mailer.zip .
 
 deploy-pwa: build-version
 	aws s3 sync $(PWA_DIR) s3://$(PWA_BUCKET) \

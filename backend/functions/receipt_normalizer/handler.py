@@ -19,7 +19,6 @@ KNOWN_STORES = ["AUCHAN", "LIDL", "BIEDRONKA"]
 def handler(event, context):
 
     print("Event received")
-    print(json.dumps(event))
 
     event_record = event["Records"][0]
 
@@ -30,20 +29,30 @@ def handler(event, context):
     name, _ = os.path.splitext(filename)
     output_key = f"normalized/{name}.json"
 
-    print(f"Reading Textract JSON: s3://{bucket}/{key}")
+    print(f"Reading Textract JSON from s3://{bucket}/{key}")
 
     response = s3.get_object(
         Bucket=bucket,
         Key=key
     )
 
-    textract_data = json.loads(response["Body"].read())
+    json_body = json.loads(response["Body"].read())
+    image_filename = json_body.get("image_filename")
+    textract_data = json_body.get("textract")
+
+    print(f"Image filename: {image_filename}")
     
     docs = textract_data.get("ExpenseDocuments") or []
     blocks = textract_data.get("Blocks") or []
-    
+
+    print(f"Textract expense documents: {len(docs)}")
+    print(f"Textract blocks: {len(blocks)}")
+
     receipt_id = build_receipt_id(docs, blocks, name)
     store = normalize_store(extract_store(docs))
+
+    print(f"Receipt ID: {receipt_id}")
+    print(f"Store: {store}")
 
     items = []
 
@@ -70,7 +79,7 @@ def handler(event, context):
 
                 normalized = {
                     "receipt_id": receipt_id,
-                    "source_file": filename,
+                    "image_filename": image_filename,
                     "store": store,
                     "product": line.get("ITEM"),
                     "quantity": quantity,
@@ -91,7 +100,7 @@ def handler(event, context):
         if total:
             items.append({
                 "receipt_id": receipt_id,
-                "source_file": filename,
+                "image_filename": image_filename,
                 "store": store,
                 "product": "nieokreślony produkt lub usługa",
                 "quantity": 1,
@@ -101,14 +110,14 @@ def handler(event, context):
 
     result = {
         "receipt_id": receipt_id,
-        "source_file": filename,
+        "image_filename": image_filename,
         "store": store,
         "date": date,
         "total": total,
         "items": items
     }
 
-    print(f"Saving normalized data: {output_key}")
+    print(f"Saving normalized data to s3://{PROCESSED_BUCKET}/{output_key}")
 
     s3.put_object(
         Bucket=PROCESSED_BUCKET,

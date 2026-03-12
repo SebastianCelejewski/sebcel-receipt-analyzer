@@ -10,9 +10,6 @@ PROCESSED_BUCKET = os.environ.get("PROCESSED_BUCKET")
 
 def handler(event, context):
 
-    print("Event received:")
-    print(json.dumps(event))
-
     try:
         record = event["Records"][0]
 
@@ -21,7 +18,7 @@ def handler(event, context):
 
         print(f"Processing file: s3://{bucket}/{key}")
 
-        response = textract.analyze_expense(
+        textract_response = textract.analyze_expense(
             Document={
                 "S3Object": {
                     "Bucket": bucket,
@@ -29,6 +26,13 @@ def handler(event, context):
                 }
             }
         )
+
+        image_filename = os.path.basename(key)
+
+        response = {
+            "image_filename": image_filename,
+            "textract": textract_response
+        }
 
         filename = os.path.basename(key)
         name, _ = os.path.splitext(filename)

@@ -11,7 +11,7 @@ PROCESSED_BUCKET = os.environ["PROCESSED_BUCKET"]
 
 CSV_COLUMNS = [
     "receipt_id",
-    "source_file",
+    "image_filename",
     "date",
     "store",
     "product",
@@ -21,10 +21,6 @@ CSV_COLUMNS = [
 ]
 
 def handler(event, context):
-
-    print("Event received")
-    print(json.dumps(event))
-
     record = event["Records"][0]
 
     bucket = record["s3"]["bucket"]["name"]
@@ -44,7 +40,7 @@ def handler(event, context):
     for item in receipt.get("items", []):
         rows.append([
             receipt.get("receipt_id"),
-            receipt.get("source_file"),
+            receipt.get("image_filename"),
             receipt.get("date"),
             receipt.get("store"),
             item.get("product"),
@@ -60,7 +56,7 @@ def handler(event, context):
     writer.writerow(CSV_COLUMNS)
     writer.writerows(rows)
 
-    print(f"Writing CSV: {output_key}")
+    print(f"Writing CSV: s3://{PROCESSED_BUCKET}/{output_key}")
 
     s3.put_object(
         Bucket=PROCESSED_BUCKET,
