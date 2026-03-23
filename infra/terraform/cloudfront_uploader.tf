@@ -4,6 +4,7 @@ resource "aws_cloudfront_distribution" "uploader" {
   origin {
     domain_name = aws_s3_bucket.uploader.bucket_regional_domain_name
     origin_id = "uploader-s3-origin"
+    origin_access_control_id = aws_cloudfront_origin_access_control.uploader.id
   }
 
   default_root_object = "index.html"
@@ -11,11 +12,8 @@ resource "aws_cloudfront_distribution" "uploader" {
   default_cache_behavior {
     target_origin_id = "uploader-s3-origin"
     viewer_protocol_policy = "redirect-to-https"
-
     allowed_methods = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
-
     cached_methods = ["GET","HEAD"]
-
     forwarded_values {
       query_string = false
       cookies { forward = "none" }
@@ -38,5 +36,13 @@ resource "aws_cloudfront_distribution" "uploader" {
       Name = "${local.project}-uploader-cdn-${var.environment}"
     }
   )
-
 }
+
+resource "aws_cloudfront_origin_access_control" "uploader" {
+  name                              = "${local.project}-pwa-oac-${var.environment}"
+  description                       = "Access to S3"
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
+}
+

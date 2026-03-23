@@ -1,7 +1,7 @@
-const API_URL = "https://o5q4idu74k.execute-api.eu-central-1.amazonaws.com"
-const COGNITO_DOMAIN = "https://sebcel-receipt-analyzer-dev.auth.eu-central-1.amazoncognito.com"
-const CLIENT_ID = "3bdji5q53j3gbg2cbcrtlam7p9"
-const REDIRECT_URI = "https://d1h1goxzgdb2gs.cloudfront.net"
+const API_URL = window.APP_CONFIG.API_URL
+const COGNITO_DOMAIN = window.APP_CONFIG.COGNITO_DOMAIN
+const CLIENT_ID = window.APP_CONFIG.CLIENT_ID
+const REDIRECT_URI = window.APP_CONFIG.REDIRECT_URI
 
 let accessToken = null
 let videoStream = null
@@ -41,16 +41,29 @@ function logout() {
 }
 
 async function startCamera() {
+  console.log("startCamera()");
   try {
     videoStream = await navigator.mediaDevices.getUserMedia({
       video: {
-        facingMode: "environment"
+        facingMode: { ideal: "environment" },
+
+        width:  { ideal: 1920, max: 2560 },
+        height: { ideal: 1080, max: 1440 }
       }
     })
 
     const video = document.getElementById("camera")
     video.srcObject = videoStream
 
+    const track = videoStream.getVideoTracks()[0]
+    console.log(track.getSettings())
+    document.getElementById("resolution").innerHTML = track.getSettings().width + "x" + track.getSettings().height;
+
+    await track.applyConstraints({
+      advanced: [
+        { focusMode: "continuous" }
+      ]
+    })
   }
   catch (err) {
     console.error(err)
@@ -139,10 +152,24 @@ async function uploadBlob(blob) {
 }
 
 async function loadVersion() {
-  const response = await fetch("version.json")
-  const data = await response.json()
+  try {
+    const res = await fetch("version.json", { cache: "no-store" })
+    const data = await res.json()
 
-  document.getElementById("version").innerText = "Version: " + data.version
+    const env = (data.env || "unknown").toUpperCase()
+    const version = data.version || "?"
+
+    const el = document.getElementById("version")
+    el.textContent = `${env} | v${version}`
+    if (env === "PROD") {
+      el.style.color = "#00ffcc"   // spokojny
+    } else if (env === "DEV") {
+      el.style.color = "#ff5555"   // ostrzegawczy
+    }      
+
+  } catch (e) {
+    document.getElementById("version").textContent = "version error"
+  }
 }
 
 async function closeApp() {

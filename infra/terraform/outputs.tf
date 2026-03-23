@@ -2,10 +2,6 @@ output "pwa_url" {
   value = local.uploader_url
 }
 
-output "uploader_website_url" {
-  value = aws_s3_bucket_website_configuration.uploader.website_endpoint
-}
-
 output "receipt_api_url" {
   value = aws_apigatewayv2_api.receipt_api.api_endpoint
 }
