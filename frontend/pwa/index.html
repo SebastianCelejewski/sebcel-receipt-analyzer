@@ -7,19 +7,19 @@
   <title>Skaner paragonów</title>
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#000000">
-  <link rel="stylesheet" href="styles.css?v=1">
+  <link rel="stylesheet" href="styles.css?v=3">
 </head>
 
 <body onload="initAuth(); loadVersion(); startCamera();">
   <div class="app">
     <video id="camera" autoplay playsinline></video>
-    <button id="torchBtn" onclick="alert('Torcz!'); toggleTorch()">🔦</button>
+    <button id="torchBtn" onclick="toggleTorch()">🔦 OFF</button>
     <button id="captureBtn" onclick="takePhoto()">●</button>
     <canvas id="canvas"></canvas>
     <div id="version"></div>
     <div id="status"></div>
   </div>
-  <script src="app.js"></script>
+  <script src="app.js?v=3"></script>
 </body>
 
 </html>

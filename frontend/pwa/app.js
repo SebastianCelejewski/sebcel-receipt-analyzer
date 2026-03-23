@@ -58,22 +58,18 @@ async function startCamera() {
 }
 
 async function toggleTorch() {
-
-  alert("Toggle torch")
   if (!videoStream) return
 
   const track = videoStream.getVideoTracks()[0]
   const capabilities = track.getCapabilities()
 
-  alert("Hopsa")
 
-  // if (!capabilities.torch) {
-  //   alert("Latarka niedostępna")
-  //   return
-  // }
+  if (!capabilities.torch) {
+    alert("Latarka niedostępna")
+    return
+  }
 
   torchEnabled = !torchEnabled
-  alert("Torch enabled: " + torchEnabled)
 
   await track.applyConstraints({
     advanced: [{ torch: torchEnabled }]
@@ -82,28 +78,6 @@ async function toggleTorch() {
   document.getElementById("torchBtn").innerText =
     torchEnabled ? "🔦 ON" : "🔦 OFF"
 }
-
-
-// async function toggleTorch() {
-
-//   const track = videoStream.getVideoTracks()[0]
-
-//   try {
-
-//     torchOn = !torchOn
-
-//     await track.applyConstraints({
-//       advanced: [{ torch: torchOn }]
-//     })
-
-//   } catch (err) {
-
-//     alert("Latarka nie jest obsługiwana na tym urządzeniu")
-
-//     console.error(err)
-
-//   }
-// }
 
 async function takePhoto() {
   const video = document.getElementById("camera")

@@ -22,7 +22,7 @@ video {
   bottom: 30px;
   left: 33%;
   transform: translateX(-50%);
-  width: 80px;
+  width: 160px;
   height: 80px;
   border-radius: 50%;
   border: 6px solid white;
@@ -34,7 +34,7 @@ video {
 #captureBtn {
   position: absolute;
   bottom: 30px;
-  left: 66%;
+  left: 75%;
   transform: translateX(-50%);
   width: 80px;
   height: 80px;

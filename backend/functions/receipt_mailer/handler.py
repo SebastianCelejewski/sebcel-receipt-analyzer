@@ -28,8 +28,11 @@ def handler(event, context):
     csv_data = download_csv(bucket, key)
 
     if (csv_data == None or len(csv_data) == 0):
+        print("Error: No data in csv")
         error_html = build_html_with_error("Brak danych w pliku CSV")
+        print("Email built, sending")
         send_email(error_html, "error")
+        print("Email sent")
         return
 
     receipt_id = csv_data[0]["receipt_id"]
@@ -58,7 +61,7 @@ def handler(event, context):
     print("Email created, sending")
 
     # response = send_email(html, receipt_id)
-    send_email_via_smtp(html, receipt_id)
+    send_email(html, receipt_id)
 
     print("Email sent")
 
@@ -163,6 +166,9 @@ def build_html_with_error(error_message):
     """
 
     return html
+
+def send_email(html, receipt_id):
+    return send_email_via_smtp(html, receipt_id)
 
 def send_email_via_smtp(html, receipt_id, attachment_bytes=None, filename=None):
 

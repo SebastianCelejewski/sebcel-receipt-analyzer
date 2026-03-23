@@ -12,7 +12,7 @@ BUILD_DIR=build
 PWA_BUCKET = sebcel-receipt-analyzer-uploader-dev
 PWA_DIR = frontend/pwa
 
-VERSION_BASE=0.1.11
+VERSION_BASE=0.2.0
 BUILD_TIME=$(shell date +"%Y-%m-%d_%H-%M-%S")
 VERSION=$(VERSION_BASE).$(BUILD_TIME)
 
@@ -69,8 +69,7 @@ deploy-pwa: build-version
 
 	aws s3 sync $(PWA_DIR) s3://$(PWA_BUCKET) \
 		--exclude "*" \
-		--include "*.html" \
-		--cache-control "no-cache"
+		--include "*.html"
 
 pwa-url:
 	terraform -chdir=infra/terraform output uploader_website_url		
