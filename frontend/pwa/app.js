@@ -197,34 +197,38 @@ function drawToCanvas() {
   ctx.restore()
 
   drawCropOverlay(ctx, canvas)
+
+  const displayW = canvas.clientWidth
+  const displayH = canvas.clientHeight
+
+  const scaleX = displayW / canvas.width
+  const scaleY = displayH / canvas.height
 }
 
 function drawCropOverlay(ctx, canvas) {
   if (!crop) return
 
+  const scaleX = canvas.clientWidth / canvas.width
+  const scaleY = canvas.clientHeight / canvas.height
+
+  const x = crop.x * scaleX
+  const y = crop.y * scaleY
+  const w = crop.w * scaleX
+  const h = crop.h * scaleY
+
   ctx.save()
 
-  // mask
   ctx.fillStyle = "rgba(0,0,0,0.6)"
   ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-  // mask hollow
   ctx.globalCompositeOperation = "destination-out"
   ctx.fillRect(crop.x, crop.y, crop.w, crop.h)
 
   ctx.restore()
 
-  // border
   ctx.strokeStyle = "#00ff00"
   ctx.lineWidth = 3
   ctx.strokeRect(crop.x, crop.y, crop.w, crop.h)
-
-  // handles
-  const size = 16
-  getHandles().forEach(h => {
-    ctx.fillStyle = "white"
-    ctx.fillRect(h.x - size/2, h.y - size/2, size, size)
-  })
 }
 
 function getHandles() {
@@ -400,18 +404,25 @@ async function closeApp() {
 }
 
 function getPos(e) {
-  const rect = e.target.getBoundingClientRect()
+  const canvas = document.getElementById("canvas")
+  const rect = canvas.getBoundingClientRect()
+
+  const scaleX = canvas.width / rect.width
+  const scaleY = canvas.height / rect.height
+
+  let clientX, clientY
 
   if (e.touches) {
-    return {
-      x: e.touches[0].clientX - rect.left,
-      y: e.touches[0].clientY - rect.top
-    }
+    clientX = e.touches[0].clientX
+    clientY = e.touches[0].clientY
+  } else {
+    clientX = e.clientX
+    clientY = e.clientY
   }
 
   return {
-    x: e.clientX - rect.left,
-    y: e.clientY - rect.top
+    x: (clientX - rect.left) * scaleX,
+    y: (clientY - rect.top) * scaleY
   }
 }
 
