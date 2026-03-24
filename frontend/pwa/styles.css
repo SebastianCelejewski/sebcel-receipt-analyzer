@@ -14,14 +14,15 @@ body {
   display: none;
 }
 
-video {
+video, canvas {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  z-index: 1;
 }
 
 canvas {
-  object-fit: cover;
+  touch-action: none;
 }
 
 .controls {
@@ -29,10 +30,21 @@ canvas {
   bottom: 80px;
   width: 100%;
   text-align: center;
+  z-index: 10;
+  pointer-events: none;
 }
 
 .controls.bottom {
   bottom: 20px;
+  z-index: 10;
+}
+
+.controls button {
+  pointer-events: auto;
+}
+
+.controls input {
+  pointer-events: auto;
 }
 
 button {

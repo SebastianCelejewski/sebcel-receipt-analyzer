@@ -14,6 +14,7 @@ let fineRotation = 0
 let crop = null
 let dragging = null
 let torchEnabled = false
+let pointerPos = null
 
 function initApp() {
   initAuth()
@@ -64,9 +65,9 @@ function initCanvas() {
   canvas.addEventListener("mousemove", onDrag)
   canvas.addEventListener("mouseup", endDrag)
 
-  canvas.addEventListener("touchstart", startDrag)
-  canvas.addEventListener("touchmove", onDrag)
-  canvas.addEventListener("touchend", endDrag)
+  canvas.addEventListener("touchstart", startDrag, { passive: false })
+  canvas.addEventListener("touchmove", onDrag, { passive: false })
+  canvas.addEventListener("touchend", endDrag)  
 }
 
 function logout() {
@@ -197,38 +198,62 @@ function drawToCanvas() {
   ctx.restore()
 
   drawCropOverlay(ctx, canvas)
-
-  const displayW = canvas.clientWidth
-  const displayH = canvas.clientHeight
-
-  const scaleX = displayW / canvas.width
-  const scaleY = displayH / canvas.height
 }
 
 function drawCropOverlay(ctx, canvas) {
   if (!crop) return
 
-  const scaleX = canvas.clientWidth / canvas.width
-  const scaleY = canvas.clientHeight / canvas.height
-
-  const x = crop.x * scaleX
-  const y = crop.y * scaleY
-  const w = crop.w * scaleX
-  const h = crop.h * scaleY
-
   ctx.save()
 
+  // borders
   ctx.fillStyle = "rgba(0,0,0,0.6)"
-  ctx.fillRect(0, 0, canvas.width, canvas.height)
-
-  ctx.globalCompositeOperation = "destination-out"
-  ctx.fillRect(crop.x, crop.y, crop.w, crop.h)
-
+  ctx.fillRect(0, 0, canvas.width, crop.y)
+  ctx.fillRect(0, crop.y + crop.h, canvas.width, canvas.height - (crop.y + crop.h))
+  ctx.fillRect(0, crop.y, crop.x, crop.h)
+  ctx.fillRect(crop.x + crop.w, crop.y, canvas.width - (crop.x + crop.w), crop.h)
   ctx.restore()
 
+  // frame
   ctx.strokeStyle = "#00ff00"
   ctx.lineWidth = 3
   ctx.strokeRect(crop.x, crop.y, crop.w, crop.h)
+
+  // handles
+  const size = 16
+  getHandles().forEach(h => {
+    ctx.fillStyle = "white"
+    ctx.fillRect(h.x - size/2, h.y - size/2, size, size)
+    const text = `${Math.round(h.x)}, ${Math.round(h.y)}`
+    drawCoords(ctx, h.x, h.y, text)
+  })
+
+  // finger/mouse position
+  if (pointerPos) {
+    const text = `👆 ${Math.round(pointerPos.x)}, ${Math.round(pointerPos.y)}`
+    drawCoords(ctx, pointerPos.x, pointerPos.y, text)
+
+    ctx.fillStyle = "red"
+    ctx.beginPath()
+    ctx.arc(pointerPos.x, pointerPos.y, 5, 0, Math.PI * 2)
+    ctx.fill()
+  }
+}
+
+function drawCoords(ctx, x, y, text) {
+  /*
+  ctx.save()
+
+  ctx.font = "14px monospace"
+  ctx.fillStyle = "white"
+  ctx.strokeStyle = "black"
+  ctx.lineWidth = 3
+
+  // outline (czytelność)
+  ctx.strokeText(text, x + 5, y - 5)
+  ctx.fillText(text, x + 5, y - 5)
+
+  ctx.restore()
+  */
 }
 
 function getHandles() {
@@ -407,9 +432,6 @@ function getPos(e) {
   const canvas = document.getElementById("canvas")
   const rect = canvas.getBoundingClientRect()
 
-  const scaleX = canvas.width / rect.width
-  const scaleY = canvas.height / rect.height
-
   let clientX, clientY
 
   if (e.touches) {
@@ -420,6 +442,9 @@ function getPos(e) {
     clientY = e.clientY
   }
 
+  const scaleX = canvas.width / rect.width
+  const scaleY = canvas.height / rect.height
+
   return {
     x: (clientX - rect.left) * scaleX,
     y: (clientY - rect.top) * scaleY
@@ -428,19 +453,23 @@ function getPos(e) {
 
 function startDrag(e) {
   const pos = getPos(e)
+  pointerPos = pos
+  e.preventDefault()
 
   for (const h of getHandles()) {
-    if (Math.abs(pos.x - h.x) < 15 && Math.abs(pos.y - h.y) < 15) {
+    if (Math.abs(pos.x - h.x) < 50 && Math.abs(pos.y - h.y) < 50) {
       dragging = h.name
     }
   }
+
+  drawToCanvas()
 }
 
 function onDrag(e) {
-  e.preventDefault()
-  if (!dragging) return
-
   const pos = getPos(e)
+  pointerPos = pos
+
+  e.preventDefault()
 
   if (dragging === "tl") {
     crop.w += crop.x - pos.x
