@@ -11,11 +11,13 @@ let capturedCanvas = null
 
 let rotation = 0
 let fineRotation = 0
-
+let crop = null
+let dragging = null
 let torchEnabled = false
 
 function initApp() {
   initAuth()
+  initCanvas()
   startCamera()
   loadVersion()
   setState("camera")
@@ -53,6 +55,18 @@ function initAuth() {
       `&scope=openid+email+profile`
     window.location.href = loginUrl
   }
+}
+
+function initCanvas() {
+  const canvas = document.getElementById("canvas")
+
+  canvas.addEventListener("mousedown", startDrag)
+  canvas.addEventListener("mousemove", onDrag)
+  canvas.addEventListener("mouseup", endDrag)
+
+  canvas.addEventListener("touchstart", startDrag)
+  canvas.addEventListener("touchmove", onDrag)
+  canvas.addEventListener("touchend", endDrag)
 }
 
 function logout() {
@@ -126,9 +140,17 @@ function takePhoto() {
   capturedCanvas = canvas
 
   drawToCanvas()
+  crop = {
+    x: canvas.width * 0.1,
+    y: canvas.height * 0.1,
+    w: canvas.width * 0.8,
+    h: canvas.height * 0.8
+  }
   setState("edit")
 
   video.pause()
+
+
 }
 
 function retake() {
@@ -175,6 +197,41 @@ function drawToCanvas() {
   ctx.drawImage(capturedCanvas, -w / 2, -h / 2)
 
   ctx.restore()
+
+  drawCropOverlay(ctx, canvas)
+}
+
+function drawCropOverlay(ctx, canvas) {
+
+  if (!crop) return
+
+  // przyciemnienie tła
+  ctx.fillStyle = "rgba(0,0,0,0.5)"
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+  // wycięcie okna
+  ctx.clearRect(crop.x, crop.y, crop.w, crop.h)
+
+  // ramka
+  ctx.strokeStyle = "lime"
+  ctx.lineWidth = 2
+  ctx.strokeRect(crop.x, crop.y, crop.w, crop.h)
+
+  // uchwyty (rogi)
+  const handles = getHandles()
+  handles.forEach(h => {
+    ctx.fillStyle = "white"
+    ctx.fillRect(h.x - 6, h.y - 6, 12, 12)
+  })
+}
+
+function getHandles() {
+  return [
+    { name: "tl", x: crop.x, y: crop.y },
+    { name: "tr", x: crop.x + crop.w, y: crop.y },
+    { name: "bl", x: crop.x, y: crop.y + crop.h },
+    { name: "br", x: crop.x + crop.w, y: crop.y + crop.h }
+  ]
 }
 
 function getFinalCanvas() {
@@ -185,23 +242,47 @@ function getFinalCanvas() {
 
   const angle = (rotation + fineRotation) * Math.PI / 180
 
+  // 🔹 obliczenie rozmiaru po rotacji (żeby nic nie ucinało)
   const sin = Math.abs(Math.sin(angle))
   const cos = Math.abs(Math.cos(angle))
 
-  const newW = w * cos + h * sin
-  const newH = w * sin + h * cos
+  const rotatedW = Math.round(w * cos + h * sin)
+  const rotatedH = Math.round(w * sin + h * cos)
 
-  const canvas = document.createElement("canvas")
-  const ctx = canvas.getContext("2d")
+  const rotatedCanvas = document.createElement("canvas")
+  const rctx = rotatedCanvas.getContext("2d")
 
-  canvas.width = newW
-  canvas.height = newH
+  rotatedCanvas.width = rotatedW
+  rotatedCanvas.height = rotatedH
 
-  ctx.translate(newW / 2, newH / 2)
-  ctx.rotate(angle)
-  ctx.drawImage(capturedCanvas, -w / 2, -h / 2)
+  rctx.save()
+  rctx.translate(rotatedW / 2, rotatedH / 2)
+  rctx.rotate(angle)
+  rctx.drawImage(capturedCanvas, -w / 2, -h / 2)
+  rctx.restore()
 
-  return canvas
+  if (!crop) {
+    return rotatedCanvas
+  }
+
+  const cropCanvas = document.createElement("canvas")
+  const cctx = cropCanvas.getContext("2d")
+
+  const cx = Math.max(0, Math.round(crop.x))
+  const cy = Math.max(0, Math.round(crop.y))
+  const cw = Math.min(rotatedW - cx, Math.round(crop.w))
+  const ch = Math.min(rotatedH - cy, Math.round(crop.h))
+
+  cropCanvas.width = cw
+  cropCanvas.height = ch
+
+  cctx.drawImage(
+    rotatedCanvas,
+    cx, cy, cw, ch,
+    0, 0, cw, ch
+  )
+
+  return cropCanvas
 }
 
 async function confirm() {
@@ -314,4 +395,54 @@ async function closeApp() {
 
   const status = document.getElementById("status")
   status.innerText = "Aplikacja zatrzymana. Możesz zamknąć okno."
+}
+
+function getPos(e) {
+  const rect = e.target.getBoundingClientRect()
+
+  if (e.touches) {
+    return {
+      x: e.touches[0].clientX - rect.left,
+      y: e.touches[0].clientY - rect.top
+    }
+  }
+
+  return {
+    x: e.clientX - rect.left,
+    y: e.clientY - rect.top
+  }
+}
+
+function startDrag(e) {
+  const pos = getPos(e)
+
+  for (const h of getHandles()) {
+    if (Math.abs(pos.x - h.x) < 15 && Math.abs(pos.y - h.y) < 15) {
+      dragging = h.name
+    }
+  }
+}
+
+function onDrag(e) {
+  if (!dragging) return
+
+  const pos = getPos(e)
+
+  if (dragging === "tl") {
+    crop.w += crop.x - pos.x
+    crop.h += crop.y - pos.y
+    crop.x = pos.x
+    crop.y = pos.y
+  }
+
+  if (dragging === "br") {
+    crop.w = pos.x - crop.x
+    crop.h = pos.y - crop.y
+  }
+
+  drawToCanvas()
+}
+
+function endDrag() {
+  dragging = null
 }
