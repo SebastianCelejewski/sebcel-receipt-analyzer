@@ -139,18 +139,16 @@ function takePhoto() {
 
   capturedCanvas = canvas
 
-  drawToCanvas()
   crop = {
     x: canvas.width * 0.1,
     y: canvas.height * 0.1,
     w: canvas.width * 0.8,
     h: canvas.height * 0.8
   }
+  
+  drawToCanvas()
   setState("edit")
-
   video.pause()
-
-
 }
 
 function retake() {
@@ -202,26 +200,30 @@ function drawToCanvas() {
 }
 
 function drawCropOverlay(ctx, canvas) {
-
   if (!crop) return
 
-  // przyciemnienie tła
-  ctx.fillStyle = "rgba(0,0,0,0.5)"
+  ctx.save()
+
+  // mask
+  ctx.fillStyle = "rgba(0,0,0,0.6)"
   ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-  // wycięcie okna
-  ctx.clearRect(crop.x, crop.y, crop.w, crop.h)
+  // mask hollow
+  ctx.globalCompositeOperation = "destination-out"
+  ctx.fillRect(crop.x, crop.y, crop.w, crop.h)
 
-  // ramka
-  ctx.strokeStyle = "lime"
-  ctx.lineWidth = 2
+  ctx.restore()
+
+  // border
+  ctx.strokeStyle = "#00ff00"
+  ctx.lineWidth = 3
   ctx.strokeRect(crop.x, crop.y, crop.w, crop.h)
 
-  // uchwyty (rogi)
-  const handles = getHandles()
-  handles.forEach(h => {
+  // handles
+  const size = 16
+  getHandles().forEach(h => {
     ctx.fillStyle = "white"
-    ctx.fillRect(h.x - 6, h.y - 6, 12, 12)
+    ctx.fillRect(h.x - size/2, h.y - size/2, size, size)
   })
 }
 
@@ -424,6 +426,7 @@ function startDrag(e) {
 }
 
 function onDrag(e) {
+  e.preventDefault()
   if (!dragging) return
 
   const pos = getPos(e)
@@ -439,6 +442,18 @@ function onDrag(e) {
     crop.w = pos.x - crop.x
     crop.h = pos.y - crop.y
   }
+
+  if (dragging === "tr") {
+    crop.w = pos.x - crop.x
+    crop.h += crop.y - pos.y
+    crop.y = pos.y
+  }
+
+  if (dragging === "bl") {
+    crop.w += crop.x - pos.x
+    crop.h = pos.y - crop.y
+    crop.x = pos.x
+  }  
 
   drawToCanvas()
 }
