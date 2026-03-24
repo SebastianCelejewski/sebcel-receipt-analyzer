@@ -4,8 +4,30 @@ const CLIENT_ID = window.APP_CONFIG.CLIENT_ID
 const REDIRECT_URI = window.APP_CONFIG.REDIRECT_URI
 
 let accessToken = null
+
 let videoStream = null
+let state = "camera"
+let capturedCanvas = null
+
+let rotation = 0
+let fineRotation = 0
+
 let torchEnabled = false
+
+function initApp() {
+  initAuth()
+  startCamera()
+  loadVersion()
+  setState("camera")
+}
+
+function setState(newState) {
+  state = newState
+
+  document.getElementById("cameraView").classList.toggle("hidden", state !== "camera")
+  document.getElementById("editView").classList.toggle("hidden", state !== "edit")
+  document.getElementById("uploadView").classList.toggle("hidden", state !== "uploading")
+}
 
 function initAuth() {
 
@@ -41,7 +63,6 @@ function logout() {
 }
 
 async function startCamera() {
-  console.log("startCamera()");
   try {
     videoStream = await navigator.mediaDevices.getUserMedia({
       video: {
@@ -56,7 +77,6 @@ async function startCamera() {
     video.srcObject = videoStream
 
     const track = videoStream.getVideoTracks()[0]
-    console.log(track.getSettings())
     document.getElementById("resolution").innerHTML = track.getSettings().width + "x" + track.getSettings().height;
 
     await track.applyConstraints({
@@ -92,14 +112,124 @@ async function toggleTorch() {
     torchEnabled ? "🔦 ON" : "🔦 OFF"
 }
 
-async function takePhoto() {
+function takePhoto() {
   const video = document.getElementById("camera")
-  const canvas = document.getElementById("canvas")
+
+  const canvas = document.createElement("canvas")
+  const ctx = canvas.getContext("2d")
+
   canvas.width = video.videoWidth
   canvas.height = video.videoHeight
-  const ctx = canvas.getContext("2d")
+
   ctx.drawImage(video, 0, 0)
-  canvas.toBlob(uploadBlob, "image/jpeg", 0.9)
+
+  capturedCanvas = canvas
+
+  drawToCanvas()
+  setState("edit")
+
+  video.pause()
+}
+
+function retake() {
+  capturedCanvas = null
+  rotation = 0
+  fineRotation = 0
+  setState("camera")
+  video.play()
+}
+
+function rotateLeft() {
+  rotation = (rotation + 270) % 360
+  drawToCanvas()
+}
+
+function rotateRight() {
+  rotation = (rotation + 90) % 360
+  drawToCanvas()
+}
+
+function setFineRotation(val) {
+  fineRotation = parseFloat(val)
+  drawToCanvas()
+}
+
+function drawToCanvas() {
+  if (!capturedCanvas) return
+
+  const canvas = document.getElementById("canvas")
+  const ctx = canvas.getContext("2d")
+
+  const w = capturedCanvas.width
+  const h = capturedCanvas.height
+
+  canvas.width = w
+  canvas.height = h
+
+  const angle = (rotation + fineRotation) * Math.PI / 180
+
+  ctx.save()
+  ctx.translate(w / 2, h / 2)
+  ctx.rotate(angle)
+
+  ctx.drawImage(capturedCanvas, -w / 2, -h / 2)
+
+  ctx.restore()
+}
+
+function getFinalCanvas() {
+  if (!capturedCanvas) return null
+
+  const w = capturedCanvas.width
+  const h = capturedCanvas.height
+
+  const angle = (rotation + fineRotation) * Math.PI / 180
+
+  const sin = Math.abs(Math.sin(angle))
+  const cos = Math.abs(Math.cos(angle))
+
+  const newW = w * cos + h * sin
+  const newH = w * sin + h * cos
+
+  const canvas = document.createElement("canvas")
+  const ctx = canvas.getContext("2d")
+
+  canvas.width = newW
+  canvas.height = newH
+
+  ctx.translate(newW / 2, newH / 2)
+  ctx.rotate(angle)
+  ctx.drawImage(capturedCanvas, -w / 2, -h / 2)
+
+  return canvas
+}
+
+async function confirm() {
+  setState("uploading")
+
+  const finalCanvas = getFinalCanvas()
+
+  if (!finalCanvas) {
+    console.error("No final canvas")
+    setState("edit")
+    return
+  }
+
+  finalCanvas.toBlob(async (blob) => {
+    if (!blob) {
+      console.error("Blob null")
+      setState("edit")
+      return
+    }
+
+    await uploadBlob(blob)
+
+    const video = document.getElementById("camera")
+    video.play()
+
+    setState("camera")
+
+  }, "image/jpeg", 0.9)
 }
 
 async function uploadBlob(blob) {
@@ -117,6 +247,7 @@ async function uploadBlob(blob) {
     )
 
     if (response.status === 401) {
+      alert("401!")
       localStorage.removeItem("access_token")
       window.location.reload()
       return
