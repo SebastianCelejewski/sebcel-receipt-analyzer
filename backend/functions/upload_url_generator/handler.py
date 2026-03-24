@@ -7,7 +7,7 @@ from datetime import datetime
 
 s3 = boto3.client("s3")
 BUCKET = os.environ["RAW_BUCKET"]
-
+COGNITO_DOMAIN = os.environ["COGNITO_DOMAIN"]
 
 def handler(event, context):
     email = fetch_email(event)
@@ -52,8 +52,7 @@ def fetch_email(event):
     auth_header = event["headers"]["authorization"]
     token = auth_header.split(" ")[1]
 
-    req = urllib.request.Request(
-        "https://sebcel-receipt-analyzer-dev.auth.eu-central-1.amazoncognito.com/oauth2/userInfo",
+    req = urllib.request.Request(f"{COGNITO_DOMAIN}/oauth2/userInfo",
         headers={
             "Authorization": f"Bearer {token}"
         }

@@ -7,8 +7,7 @@ variable "environment" {
 variable "notification_emails" {
   type = list(string)
   default = [
-    "Sebastian.Celejewski@wp.pl",
-    "Ag.Celejewska@wp.pl"
+    "Sebastian.Celejewski@wp.pl"
   ]
 }
 

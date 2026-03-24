@@ -12,7 +12,8 @@ resource "aws_lambda_function" "upload_url_generator_function" {
 
   environment {
     variables = {
-      RAW_BUCKET = aws_s3_bucket.raw_receipts.id
+      RAW_BUCKET = aws_s3_bucket.raw_receipts.id,
+      COGNITO_DOMAIN = "https://sebcel-receipt-analyzer-${var.environment}.auth.eu-central-1.amazoncognito.com"
     }
   }
 
