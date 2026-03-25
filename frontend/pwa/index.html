@@ -12,15 +12,15 @@
   <script src="config.js"></script>
 </head>
 
-<body onload="initApp()">
+<body>
 
   <!-- CAMERA -->
   <div id="cameraView" class="view">
     <video id="camera" autoplay playsinline></video>
 
     <div class="controls">
-      <button onclick="toggleTorch()">🔦</button>
-      <button onclick="takePhoto()">📷</button>
+      <button id="torchButton">🔦</button>
+      <button id="takePhotoButton">📷</button>
     </div>
   </div>
 
@@ -29,28 +29,21 @@
     <canvas id="canvas"></canvas>
 
     <div class="controls">
-      <button onclick="rotateLeft()">↺</button>
-      <input type="range" min="-10" max="10" step="0.1"
-             value="0"
-             oninput="setFineRotation(this.value)">
-      <button onclick="rotateRight()">↻</button>
+      <button id="rotateLeftButton">↺</button>
+      <input id="fineRotationSlider" type="range" min="-10" max="10" step="0.1" value="0">
+      <button id="rotateRightButton">↻</button>
     </div>
 
     <div class="controls bottom">
-      <button onclick="retake()">↩</button>
-      <button onclick="confirm()">✓</button>
+      <button id="retakeButton">↩</button>
+      <button id="confirmButton">✓</button>
     </div>
-  </div>
-
-  <!-- UPLOAD -->
-  <div id="uploadView" class="view hidden">
-    <p>Wysyłanie...</p>
   </div>
 
   <div id="status"></div>
   <div id="version"></div>
   <div id="resolution"></div>
 
-  <script src="app.js?v=__VERSION__"></script>
+  <script type="module" src="app.js?v=__VERSION__"></script>
 </body>
 </html>
