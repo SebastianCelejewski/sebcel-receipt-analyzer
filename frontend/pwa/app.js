@@ -64,6 +64,8 @@ function switchToCameraMode() {
   editorState.image = null
   editorState.rotation = 0
   editorState.fineRotation = 0
+  editorState._rotated = null
+  editorState._rotatedKey = null
   setState("camera")
   video.play()
 }
@@ -77,9 +79,8 @@ function initApp() {
   initCanvas()
   startCamera()
   loadVersion()
-  setState("camera")
+  switchToCameraMode()
 }
-
 
 function initCanvas() {
   canvas.addEventListener("mousedown", (e) => startDrag(e, editorState, canvas, requestRender))

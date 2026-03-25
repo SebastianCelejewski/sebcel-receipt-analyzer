@@ -73,6 +73,8 @@ export function takePhoto(state) {
     w: canvas.width * 0.8,
     h: canvas.height * 0.8
   }
+  state._rotated = null
+  state._rotatedKey = null
 }
 
 
