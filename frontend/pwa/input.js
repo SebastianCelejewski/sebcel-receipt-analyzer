@@ -6,7 +6,7 @@ export function startDrag(e, state, canvas, requestRender) {
   e.preventDefault()
 
   for (const h of getHandles(state.crop)) {
-    if (Math.abs(pos.x - h.x) < 50 && Math.abs(pos.y - h.y) < 50) {
+    if (Math.abs(pos.x - h.x) < 20 && Math.abs(pos.y - h.y) < 20) {
       state.dragging = h.name
       break
     }
