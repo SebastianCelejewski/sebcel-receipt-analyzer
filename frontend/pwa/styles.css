@@ -45,6 +45,7 @@ canvas {
 
 .controls input {
   pointer-events: auto;
+  width: 100%;
 }
 
 button {
