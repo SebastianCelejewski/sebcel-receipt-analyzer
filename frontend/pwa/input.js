@@ -16,6 +16,8 @@ export function startDrag(e, state, canvas, requestRender) {
 }
 
 export function onDrag(e, state, canvas, requestRender) {
+  if (!state.dragging) return
+  
   const pos = getPos(e, canvas)
   state.pointer = pos
 

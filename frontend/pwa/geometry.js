@@ -29,6 +29,18 @@ export function getHandles(crop) {
   ]
 }
 
+function normalizeCrop(crop) {
+  if (crop.w < 0) {
+    crop.x += crop.w
+    crop.w = -crop.w
+  }
+
+  if (crop.h < 0) {
+    crop.y += crop.h
+    crop.h = -crop.h
+  }
+}
+
 export function updateCropFromDrag(state, pos) {
   const crop = state.crop
 
@@ -55,4 +67,6 @@ export function updateCropFromDrag(state, pos) {
     crop.h = pos.y - crop.y
     crop.x = pos.x
   }
+
+  normalizeCrop(crop)
 }
