@@ -13,12 +13,20 @@
 </head>
 
 <body>
+  <h1>Receipt Analyzer</h1>
+  
+  <div id="appInfo">
+    <div id="resolution"></div>
+    <div id="version"></div>
+  </div>
 
   <!-- CAMERA -->
   <div id="cameraView" class="view">
-    <video id="camera" autoplay playsinline></video>
+    <div class="cameraContainer">
+      <video id="camera" autoplay playsinline></video>
+    </div>
 
-    <div class="controls bottom">
+    <div class="controlsContainer">
       <button id="torchButton">🔦</button>
       <button id="takePhotoButton">📷</button>
     </div>
@@ -26,23 +34,24 @@
 
   <!-- EDIT -->
   <div id="editView" class="view hidden">
-    <canvas id="canvas"></canvas>
+    <div class="cameraContainer">
+      <canvas id="canvas"></canvas>
+    </div>      
 
-    <div class="controls">
-      <input id="fineRotationSlider" type="range" min="-45" max="45" step="0.1" value="0">
-    </div>
-
-    <div class="controls bottom">
-      <button id="retakeButton">↩</button>
-      <button id="rotateLeftButton">↺</button>
-      <button id="rotateRightButton">↻</button>
-      <button id="confirmButton">✓</button>
+    <div class="controlsContainer">
+      <div>
+        <input id="fineRotationSlider" type="range" min="-45" max="45" step="0.1" value="0">
+      </div>
+      <div>
+        <button id="retakeButton">↩</button>
+        <button id="rotateLeftButton">↺</button>
+        <button id="rotateRightButton">↻</button>
+        <button id="confirmButton">✓</button>
+      </div>
     </div>
   </div>
 
   <div id="status"></div>
-  <div id="version"></div>
-  <div id="resolution"></div>
 
   <script type="module" src="app.js?v=__VERSION__"></script>
 </body>
