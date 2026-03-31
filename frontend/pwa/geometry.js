@@ -69,4 +69,18 @@ export function updateCropFromDrag(state, pos) {
   }
 
   normalizeCrop(crop)
+  clampCropToBounds(crop, state.canvasWidth, state.canvasHeight)
+}
+
+export function clampCropToBounds(crop, maxW, maxH) {
+  crop.x = Math.max(0, crop.x)
+  crop.y = Math.max(0, crop.y)
+
+  if (crop.x + crop.w > maxW) {
+    crop.w = maxW - crop.x
+  }
+
+  if (crop.y + crop.h > maxH) {
+    crop.h = maxH - crop.y
+  }
 }
