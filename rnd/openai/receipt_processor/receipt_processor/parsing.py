@@ -8,6 +8,9 @@ def extract_json(text):
         return text[start:end+1]
     return text
 
+def extract_items(data):
+    return data.get("items", [])
+
 def parse_response(text):
     try:
         return json.loads(extract_json(text))
@@ -32,3 +35,11 @@ def format_total(value):
         return f"{float(value):.2f}".replace(".", ",")
     except:
         return value
+    
+def to_float(value):
+    try:
+        if value is None:
+            return None
+        return float(value)
+    except:
+        return None    

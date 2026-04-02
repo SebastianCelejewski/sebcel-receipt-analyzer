@@ -42,7 +42,7 @@ def safe_rename(src, dst):
     os.rename(src, new_path)
     return new_path
 
-def generate_csv_filename():
+def generate_csv_filenames():
     now = datetime.now()
     timestamp = now.strftime("%Y-%m-%d_%H.%M")
-    return f"{timestamp}_receipts.csv"    
+    return f"{timestamp}_summary.csv", f"{timestamp}_details.csv"
