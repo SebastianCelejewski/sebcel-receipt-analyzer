@@ -40,7 +40,6 @@ export async function toggleTorch() {
   const track = videoStream.getVideoTracks()[0]
   const capabilities = track.getCapabilities()
 
-
   if (!capabilities.torch) {
     alert("Latarka niedostępna")
     return

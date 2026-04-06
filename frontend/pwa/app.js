@@ -1,6 +1,6 @@
 import { render as renderFn, getRotatedCanvas } from "./render.js"
 import { rotateCrop90 } from "./geometry.js"
-import { startCamera, toggleTorch, takePhoto } from "./camera.js"
+import { startCamera, toggleTorch, turnOffTorch, bringBackTorch, takePhoto } from "./camera.js"
 import { startDrag, onDrag, endDrag } from "./input.js"
 import { initUpload, upload } from "./upload.js"
 
@@ -85,11 +85,15 @@ function initApp() {
 function initCanvas() {
   canvas.addEventListener("mousedown", (e) => startDrag(e, editorState, canvas, requestRender))
   canvas.addEventListener("mousemove", (e) => onDrag(e, editorState, canvas, requestRender))
-  canvas.addEventListener("mouseup", (e) => endDrag(e, editorState, canvas, requestRender))
-
   canvas.addEventListener("touchstart", (e) => startDrag(e, editorState, canvas, requestRender), { passive: false })
   canvas.addEventListener("touchmove", (e) => onDrag(e, editorState, canvas, requestRender), { passive: false })
-  canvas.addEventListener("touchend", (e) => endDrag(e, editorState, canvas, requestRender))  
+
+  canvas.addEventListener("mouseup", (e) => endDrag(editorState))
+  canvas.addEventListener("touchend", (e) => endDrag(editorState))  
+  canvas.addEventListener("touchcancel", (e) => endDrag(editorState))  
+  window.addEventListener("mouseup", () => endDrag(editorState))
+  window.addEventListener("touchend", () => endDrag(editorState))
+  window.addEventListener("touchcancel", () => endDrag(editorState))
 }
 
 function requestRender() {
@@ -148,24 +152,4 @@ async function loadVersion() {
   } catch (e) {
     document.getElementById("version").textContent = "version error"
   }
-}
-
-async function closeApp() {
-  if (videoStream) {
-    const tracks = videoStream.getTracks()
-    tracks.forEach(track => track.stop())
-    videoStream = null
-  }
-
-  document.getElementById("camera").srcObject = null
-
-  const status = document.getElementById("status")
-  status.innerText = "Aplikacja zatrzymana. Możesz zamknąć okno."
-}
-
-function logout() {
-  const logoutUrl = `${COGNITO_DOMAIN}/logout` +
-    `?client_id=${CLIENT_ID}` +
-    `&logout_uri=${encodeURIComponent(REDIRECT_URI)}`
-  window.location.href = logoutUrl
 }

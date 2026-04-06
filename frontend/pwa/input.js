@@ -5,19 +5,35 @@ export function startDrag(e, state, canvas, requestRender) {
   state.pointer = pos
   e.preventDefault()
 
+  state.dragging = null
+
+  let bestHandle = null
+  let bestDist = Infinity
+
   for (const h of getHandles(state.crop)) {
-    if (Math.abs(pos.x - h.x) < 50 && Math.abs(pos.y - h.y) < 50) {
-      state.dragging = h.name;
-      requestRender();
-      return;
+    const dx = pos.x - h.x
+    const dy = pos.y - h.y
+    const dist = Math.sqrt(dx * dx + dy * dy)
+
+    if (dist < 50 && dist < bestDist) {
+      bestDist = dist
+      bestHandle = h
     }
   }
 
-  state.dragging = null;
-  requestRender();
+  if (bestHandle) {
+    state.dragging = bestHandle.name
+  }
+
+  requestRender()
 }
 
 export function onDrag(e, state, canvas, requestRender) {
+  if (e.buttons === 0) {
+    state.dragging = null
+    return
+  }
+
   if (!state.dragging) return
   
   const pos = getPos(e, canvas)
