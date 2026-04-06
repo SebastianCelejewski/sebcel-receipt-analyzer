@@ -14,16 +14,16 @@ PROCESSED_BUCKET = os.environ.get("PROCESSED_BUCKET")
 OPENAI_API_KEY_PARAMETER_NAME = os.environ.get("OPENAI_API_KEY_PARAMETER_NAME")
 
 def handler(event, context):
-    print("handler() start")
     try:
-        record = event["Records"][0]
+        sns_record = event["Records"][0]
+        sns_message = json.loads(sns_record["Sns"]["Message"])
+        s3_record = sns_message["Records"][0]
 
-        input_bucket = record["s3"]["bucket"]["name"]
-        input_key = urllib.parse.unquote_plus(record["s3"]["object"]["key"])
+        input_bucket = s3_record["s3"]["bucket"]["name"]
+        input_key = urllib.parse.unquote_plus(s3_record["s3"]["object"]["key"])
         input_file_name = os.path.basename(input_key)
         print(f"Processing file: s3://{input_bucket}/{input_key}")
 
-        print("Loading file from S3")
         get_object_response = s3client.get_object(Bucket=input_bucket, Key=input_key)
         input_file = get_object_response["Body"].read()
         input_file_content_type = get_object_response['ContentType']
@@ -71,6 +71,7 @@ def call_openai(file_name, file_content_type, file):
 
     content.extend(content_for_file)
 
+    print("Sending request to OpenAI")
     response = openAiClient.responses.create(
         model="gpt-4.1",
         input=[{
@@ -79,6 +80,7 @@ def call_openai(file_name, file_content_type, file):
         }]
     )
 
+    print("Received response from OpenAI")
     return response.output_text.strip()
 
 def get_openai_client():

@@ -1,5 +1,4 @@
 def build_prompt():
-    print("Building prompt")
     return """You are a system that extracts structured data from Polish retail receipts (paragony), invoices (faktury), bank account records (wyciąg), emails, etc.
 
 The input can be:

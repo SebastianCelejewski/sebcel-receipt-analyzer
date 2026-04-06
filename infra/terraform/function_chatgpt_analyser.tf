@@ -7,6 +7,7 @@ resource "aws_lambda_function" "chatgpt_analyzer_function" {
 
   runtime = "python3.12"
   handler = "handler.handler"
+  timeout = 60
 
   role = aws_iam_role.chatgpt_analyzer_function_role.arn
 
@@ -79,6 +80,20 @@ resource "aws_iam_role_policy" "chatgpt_analyser_function_policy" {
           "s3:PutObject"
         ]
         Resource = "${aws_s3_bucket.processed_receipts.arn}/*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:GetParameter"
+        ]
+        Resource = aws_ssm_parameter.openai_api_key.arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "kms:Decrypt"
+        ]
+        Resource = "*"
       }
     ]
   })
