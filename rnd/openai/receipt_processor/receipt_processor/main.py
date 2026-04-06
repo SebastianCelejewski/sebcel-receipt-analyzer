@@ -1,8 +1,9 @@
 import os
+import sys
 from receipt_processor.parsing import extract_items
 from receipt_processor.csv_utils import append_items_to_csv
-from parsing import extract_items
-from csv_utils import append_items_to_csv
+from receipt_processor.parsing import extract_items
+from receipt_processor.csv_utils import append_items_to_csv
 from receipt_processor.openai_client import call_openai
 from receipt_processor.parsing import parse_response
 from receipt_processor.csv_utils import init_csv, write_csv_row
@@ -20,21 +21,21 @@ def process_file(folder, filename, summary_writer, details_writer):
     path = os.path.join(folder, filename)
     print(f"Processing {filename}")
 
-    print("[image]", end="")
+    print("[image]", end="", flush=True)
     image = encode_image(path)
 
-    print("[openai]", end="")
+    print("[openai]", end="", flush=True)
     response = call_openai(image)
 
-    print("[parsing]", end="")
+    print("[parsing]", end="", flush=True)
     data = parse_response(response)
     if not data:
         return
 
-    print("[csv_s]", end="")
+    print("[csv_s]", end="", flush=True)
     write_csv_row(summary_writer, data)
 
-    print("[csv_d]", end="")
+    print("[csv_d]", end="", flush=True)
     items = extract_items(data) or []
     append_items_to_csv(details_writer, data, items)
 
@@ -46,6 +47,8 @@ def process_file(folder, filename, summary_writer, details_writer):
     print("->", final_path)
 
 def main():
+    sys.stdout.reconfigure(encoding='utf-8')
+
     folder = "."
     summary_csv_path, details_csv_path = generate_csv_filenames()
     

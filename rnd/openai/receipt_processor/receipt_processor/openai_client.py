@@ -3,19 +3,23 @@ from openai import OpenAI
 client = OpenAI()
 
 def build_prompt():
-    return """You are a system that extracts structured data from Polish retail receipts (paragony).
+    return """You are a system that extracts structured data from Polish retail receipts (paragony), invoices (faktury), bank account records (wyciąg), emails, etc.
 
-The input is an image of a receipt written in Polish.
+The input can be:
+- an image of a receipt written in Polish
+- a pdf document of an invoice written in Polish
+- an email file containing order information
+- etc.
 
 --------------------------------
 TASK
 --------------------------------
 
-Extract from the image:
+Extract from the input:
 
-1. Date and time
+1. Date and time of transaction
 2. Store name
-3. Document type (e.g. receipt, card payment confirmation, etc.)
+3. Document type (e.g. receipt, card payment confirmation, invoice, email, etc.)
 4. Final total amount
 5. Expense category (based on store name)
 6. List of purchased items
@@ -27,7 +31,8 @@ CATEGORY RULES (VERY IMPORTANT)
 Assign category based on store name:
 
 - piekarnia, cukiernia, warzywniak, mięsny → wydatki codzienne
-- Auchan → wydatki tygodniowe
+- Auchan, Frisco → wydatki tygodniowe
+- Energa → opłaty
 - lekarze, apteki → lekarze i leczenie
 - C&A, H&M and other clothing stores → ubrania
 - Zarząd Dróg i Zieleni, Gdańsk Transport Company → przejazdy
@@ -62,7 +67,8 @@ OUTPUT FORMAT (STRICT JSON ONLY)
   "category": "string",
   "items": [
     {
-      "name": "string",
+      "original_name": "string",
+      "normalized_name": "string",
       "unit": "kg | g | l | szt | op | null",
       "unit_price": number,
       "amount": number,
@@ -96,9 +102,12 @@ ITEM RULES
 
 Each item must include:
 
-name:
-- Clean product name
-- Remove unnecessary codes
+original_name:
+- Taken verbatim from the receipt (e.g. "NAS.MIESZA 797630B")
+
+normalized_name:
+- Remove unnecessary codes (e.g. remove "797630B")
+- Expand shortcuts (e.g. change "NAS." to "Nasiona", ".RAZ." to "Chleb razowy", "Orzech wło" to "Orzechy włoskie")
 
 unit:
 - Use:
@@ -107,6 +116,7 @@ unit:
   "l" for liquids
   "szt" for pieces
   "op" for packages
+  
 - If unknown → null
 
 unit_price:
@@ -152,12 +162,13 @@ CRITICAL
 """
 
 def call_openai(image_base64):
+    prompt = build_prompt()
     response = client.responses.create(
         model="gpt-4.1",
         input=[{
             "role": "user",
             "content": [
-                {"type": "input_text", "text": build_prompt()},
+                {"type": "input_text", "text": prompt},
                 {
                     "type": "input_image",
                     "image_url": f"data:image/jpeg;base64,{image_base64}"

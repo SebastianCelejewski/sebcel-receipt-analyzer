@@ -1,6 +1,6 @@
 [project]
 name = "receipt-processor"
-version = "0.2.0"
+version = "0.2.1"
 description = "Receipt processing CLI tool"
 dependencies = [
     "openai"
