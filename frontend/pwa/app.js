@@ -1,6 +1,6 @@
 import { render as renderFn, getRotatedCanvas } from "./render.js"
 import { rotateCrop90 } from "./geometry.js"
-import { startCamera, toggleTorch, turnOffTorch, bringBackTorch, takePhoto } from "./camera.js"
+import { startCamera, toggleTorch, takePhoto } from "./camera.js"
 import { startDrag, onDrag, endDrag } from "./input.js"
 import { initUpload, upload } from "./upload.js"
 
