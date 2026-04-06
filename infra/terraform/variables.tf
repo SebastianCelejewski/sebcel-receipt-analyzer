@@ -22,3 +22,9 @@ variable "smtp_password" {
   sensitive = true
   default = "ChangeMe"
 }
+
+variable "openai_api_key" {
+  type      = string
+  sensitive = true
+  default = "ChangeMe"
+}

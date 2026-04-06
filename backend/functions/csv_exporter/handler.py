@@ -32,7 +32,11 @@ def handler(event, context):
     print(f"Reading normalized JSON: s3://{bucket}/{key}")
 
     response = s3.get_object(Bucket=bucket, Key=key)
+    get_object_obj = s3.get_object(Bucket=bucket, Key=key)
+    binary = obj["Body"].read()
+    base64_data = base64.b64encode(binary).decode("utf-8")
 
+data_url = f"data:{obj['ContentType']};base64,{base64_data}"
     receipt = json.loads(response["Body"].read())
 
     rows = []

@@ -1,6 +1,6 @@
 resource "aws_lambda_function" "textract_analyzer_function" {
 
-  function_name = "${local.project}-ingest-function-${var.environment}"
+  function_name = "${local.project}-textract-analyser-function-${var.environment}"
 
   filename = "../../build/textract_analyzer.zip"
   source_code_hash = filebase64sha256("../../build/textract_analyzer.zip")
@@ -19,7 +19,7 @@ resource "aws_lambda_function" "textract_analyzer_function" {
   tags = merge(
     local.common_tags,
     {
-      Name = "${local.project}-ingest-function-${var.environment}"
+      Name = "${local.project}-textract-analyser-function-${var.environment}"
     }
   )
 }

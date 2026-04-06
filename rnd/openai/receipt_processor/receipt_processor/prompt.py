@@ -116,6 +116,8 @@ unit:
   "op" for packages
   
 - If unknown → null
+- Abbreviation for Polish "unit" is "J.m.".
+- For some invoices there is a column with a product weight (e.g. titled "Gramatura"). Do not take the unit from that column. Look for information about the unit in other columns, e.g. "J.m.".
 
 unit_price:
 - Price per unit

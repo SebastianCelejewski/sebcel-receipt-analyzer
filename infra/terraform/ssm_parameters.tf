@@ -31,3 +31,23 @@ resource "aws_ssm_parameter" "smtp_password" {
     }
   )
 }
+
+resource "aws_ssm_parameter" "openai_api_key" {
+
+  name  = "/${local.project}/${var.environment}/openai/api_key"
+  type  = "SecureString"
+  value = var.openai_api_key
+
+  lifecycle {
+    ignore_changes = [
+      value
+    ]
+  }
+
+  tags = merge(
+    local.common_tags,
+    {
+      Name = "${local.project}-openai-api-key-${var.environment}"
+    }
+  )
+}

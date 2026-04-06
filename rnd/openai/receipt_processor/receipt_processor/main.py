@@ -36,22 +36,17 @@ def process_file(path, summary_writer, details_writer):
     file_extension = os.path.splitext(path)[1].lower()
     print(f"Processing {filename}")
 
-    print("[openai]", end="", flush=True)
     response = call_openai(path)
 
-    print("[parsing]", end="", flush=True)
     data = parse_response(response)
     if not data:
         return
 
-    print("[csv_s]", end="", flush=True)
     write_csv_row(summary_writer, data)
 
-    print("[csv_d]", end="", flush=True)
     items = extract_items(data) or []
     append_items_to_csv(details_writer, data, items)
 
-    print("[rename]", end="\n")
     new_name = build_filename(data, file_extension)
     new_path = os.path.join(dir_path, new_name)
 

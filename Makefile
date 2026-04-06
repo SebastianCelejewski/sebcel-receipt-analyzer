@@ -14,7 +14,7 @@ PWA_BUCKET = sebcel-receipt-analyzer-uploader-$(ENV)
 PWA_SRC_DIR = frontend/pwa
 PWA_BUILD_DIR = frontend/pwa-build
 
-VERSION_BASE=0.3.0
+VERSION_BASE=0.3.1
 BUILD_TIME=$(shell date +"%Y-%m-%d_%H-%M-%S")
 VERSION=$(VERSION_BASE).$(BUILD_TIME)
 
@@ -83,11 +83,38 @@ infra-apply: confirm-prod
 infra-destroy:
 	@echo "[infra-deploy]"
 	cd $(INFRA_DIR) && terraform destroy
+	
+build-layer-openai:
+	@echo "[build-layer-openai]"
+	rm -rf backend/layers/openai_layer/python
+	mkdir -p backend/layers/openai_layer/python
+
+	MSYS_NO_PATHCONV=1 docker run --rm \
+		-v "$$(pwd -W)":/var/task \
+		--entrypoint "" \
+		public.ecr.aws/lambda/python:3.12 \
+		pip install openai -t backend/layers/openai_layer/python
+
+	cd backend/layers/openai_layer && zip -r ../../../build/openai_layer.zip .
+
+build-layer-pymupdf:
+	@echo "[build-layer-pymupdf]"
+	rm -rf backend/layers/pymupdf/python
+	mkdir -p backend/layers/pymupdf/python
+
+	MSYS_NO_PATHCONV=1 docker run --rm \
+		-v "$$(pwd -W)":/var/task \
+		--entrypoint "" \
+		public.ecr.aws/lambda/python:3.12 \
+		pip install pymupdf -t backend/layers/pymupdf_layer/python
+
+	cd backend/layers/pymupdf_layer && zip -r ../../../build/pymupdf_layer.zip .
 
 package-functions:
 	@echo "[package-functions]"
 	mkdir -p $(BUILD_DIR)
 	cd backend/functions/textract_analyzer && zip -r ../../../$(BUILD_DIR)/textract_analyzer.zip .
+	cd backend/functions/chatgpt_analyzer && zip -r ../../../$(BUILD_DIR)/chatgpt_analyzer.zip .
 	cd backend/functions/receipt_normalizer && zip -r ../../../$(BUILD_DIR)/receipt_normalizer.zip .
 	cd backend/functions/csv_exporter && zip -r ../../../$(BUILD_DIR)/csv_exporter.zip .
 	cd backend/functions/upload_url_generator && zip -r ../../../$(BUILD_DIR)/upload_url_generator.zip .
