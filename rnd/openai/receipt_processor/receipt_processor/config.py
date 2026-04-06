@@ -9,23 +9,23 @@ ALLOWED_CATEGORIES = {
 }
 
 SUMMARY_CSV_HEADERS = [
-    "datetime",
-    "store",
-    "document_type",
-    "total",
-    "category"
+    "Data i godzina",
+    "Sklep",
+    "Typ dokumentu",
+    "Suma",
+    "Kategoria"
 ]
 
 DETAILS_CSV_HEADERS = [
-    "datetime",
-    "store",
-    "document_type",
-    "category",
-    "subcategory",
-    "original_item_name",
-    "normalized_item_name",
-    "unit",
-    "unit_price",
-    "amount",
-    "price"
+    "Data i czas",
+    "Sklep",
+    "Typ dokumentu",
+    "Kategoria",
+    "Podkategoria",
+    "Nazwa oryginalna",
+    "Nazwa znormalizowana",
+    "Jednostka",
+    "Cena jednostkowa",
+    "Ilość/liczba",
+    "Cena"
 ]

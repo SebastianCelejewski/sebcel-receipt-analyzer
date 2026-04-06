@@ -5,16 +5,29 @@ import re
 import unicodedata
 from datetime import datetime
 
-def list_jpg_files(folder):
-    return [f for f in os.listdir(folder) if f.lower().endswith(".jpg")]
+SUPPORTED_EXTENSIONS = {
+    ".jpg", ".jpeg", ".png",
+    ".pdf",
+    ".eml"
+}
+
+def list_input_files(folder):
+    result = []
+
+    for root, dirs, files in os.walk(folder):
+        for file in files:
+            ext = os.path.splitext(file)[1].lower()
+
+            if ext in SUPPORTED_EXTENSIONS:
+                result.append(os.path.join(root, file))
+            else:
+                print(f"File {file} is not supported - ignoring!")
+
+    return result
 
 def encode_image(path):
     with open(path, "rb") as f:
         return base64.b64encode(f.read()).decode("utf-8")
-
-def is_already_processed(filename):
-    pattern = r"^\d{4}-\d{2}-\d{2}_\d{2}\.\d{2}_.+\.jpg$"
-    return re.match(pattern, filename) is not None
 
 def sanitize_filename_part(text):
     if not text:
@@ -27,10 +40,10 @@ def sanitize_filename_part(text):
     text = re.sub(r'_+', '_', text)
     return text[:100] if text else "unknown"
 
-def build_filename(data):
+def build_filename(data, file_extension):
     dt = data.get("datetime", "unknown").replace(":", ".").replace(" ", "_")
     store = sanitize_filename_part(data.get("store", "unknown"))
-    return f"{dt}_{store}.jpg"
+    return f"{dt}_{store}.{file_extension}"
 
 def safe_rename(src, dst):
     if not os.path.exists(dst):
