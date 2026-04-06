@@ -51,8 +51,41 @@ export async function toggleTorch() {
     advanced: [{ torch: torchEnabled }]
   })
 
-  document.getElementById("torchBtn").innerText =
-    torchEnabled ? "🔦 ON" : "🔦 OFF"
+  document.getElementById("torchBtn").innerText = torchEnabled ? "🔦 ON" : "🔦 OFF"
+}
+
+export async function turnOffTorch() {
+  if (!videoStream) return
+
+  const track = videoStream.getVideoTracks()[0]
+  const capabilities = track.getCapabilities()
+
+  if (!capabilities.torch) {
+    return
+  }
+
+  await track.applyConstraints({
+    advanced: [{ torch: false }]
+  })
+
+  document.getElementById("torchBtn").innerText = "🔦 OFF"
+}
+
+export async function bringBackTorch() {
+  if (!videoStream) return
+
+  const track = videoStream.getVideoTracks()[0]
+  const capabilities = track.getCapabilities()
+
+  if (!capabilities.torch) {
+    return
+  }
+
+  await track.applyConstraints({
+    advanced: [{ torch: torchEnabled }]
+  })
+
+  document.getElementById("torchBtn").innerText = torchEnabled ? "🔦 ON" : "🔦 OFF"
 }
 
 export function takePhoto(state) {

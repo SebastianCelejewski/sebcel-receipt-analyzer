@@ -1,6 +1,6 @@
 import { render as renderFn, getRotatedCanvas } from "./render.js"
 import { rotateCrop90 } from "./geometry.js"
-import { startCamera, toggleTorch, takePhoto } from "./camera.js"
+import { startCamera, toggleTorch, turnOffTorch, bringBackTorch, takePhoto } from "./camerab.js"
 import { startDrag, onDrag, endDrag } from "./input.js"
 import { initUpload, upload } from "./upload.js"
 
@@ -58,6 +58,7 @@ function handleConfirmButtonClicked() {
 function switchToEditMode() {
   setState("edit")
   video.pause()
+  turnOffTorch()
 }
 
 function switchToCameraMode() {
@@ -67,6 +68,7 @@ function switchToCameraMode() {
   editorState._rotated = null
   editorState._rotatedKey = null
   setState("camera")
+  bringBackTorch()
   video.play()
 }
 
