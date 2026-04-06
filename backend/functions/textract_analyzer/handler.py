@@ -11,10 +11,12 @@ PROCESSED_BUCKET = os.environ.get("PROCESSED_BUCKET")
 def handler(event, context):
 
     try:
-        record = event["Records"][0]
+        sns_record = event["Records"][0]
+        sns_message = json.loads(sns_record["Sns"]["Message"])
+        s3_record = sns_message["Records"][0]
 
-        bucket = record["s3"]["bucket"]["name"]
-        key = urllib.parse.unquote_plus(record["s3"]["object"]["key"])
+        bucket = s3_record["s3"]["bucket"]["name"]
+        key = urllib.parse.unquote_plus(s3_record["s3"]["object"]["key"])
 
         print(f"Processing file: s3://{bucket}/{key}")
 

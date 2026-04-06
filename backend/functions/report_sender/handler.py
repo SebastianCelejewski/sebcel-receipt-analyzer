@@ -1,11 +1,10 @@
 import boto3
-import csv
 import os
 import base64
-import json
 import smtplib
 import json
 from email.message import EmailMessage
+from decimal import Decimal, InvalidOperation
 
 s3 = boto3.client("s3")
 ses = boto3.client("ses")
@@ -19,27 +18,35 @@ SMTP_PASSWORD_PARAM = os.environ["SMTP_PASSWORD_PARAM"]
 RECIPIENTS = os.environ.get("RECIPIENTS", "").split(",")
 
 def handler(event, context):
+    print(json.dumps(event))
     record = event["Records"][0]
     
     bucket = record["s3"]["bucket"]["name"]
     key = record["s3"]["object"]["key"]
 
-    print(f"Loading CSV file from s3://{bucket}/{key}")
-    csv_data = download_csv(bucket, key)
+    print(f"Loading JSON file from s3://{bucket}/{key}")
+    data = download_json(bucket, key)
+    print(json.dumps(data))
 
-    if (csv_data == None or len(csv_data) == 0):
-        print("Error: No data in csv")
-        error_html = build_html_with_error("Brak danych w pliku CSV")
+    if (data == None or len(data) == 0):
+        print("Error: No data in json")
+        error_html = build_html_with_error("Brak danych w pliku JSON")
         print("Email built, sending")
         send_email(error_html, "error")
         print("Email sent")
         return
 
-    receipt_id = csv_data[0]["receipt_id"]
-    image_filename = csv_data[0]["image_filename"]
-    store = csv_data[0]["store"]
-    date = csv_data[0]["date"]
-    total = csv_data[0]["total"]
+    image_filename = data["image_filename"]
+    chatgpt_response = data["chatgpt"]
+
+    chatgpt_data = json.loads(chatgpt_response)
+
+    store = chatgpt_data["store"]
+    date = chatgpt_data["datetime"]
+    document_type = chatgpt_data["document_type"]
+    total = chatgpt_data["total"]
+    category = chatgpt_data["category"]
+    items = chatgpt_data["items"]
 
     image_key = f"uploads/{image_filename}"
 
@@ -50,17 +57,18 @@ def handler(event, context):
     print("Image downloaded")
 
     html = build_html(
-        receipt_id,
         store,
         date,
+        document_type,
+        category,
         total,
-        csv_data,
+        items,
         image_base64
     )
 
     print("Email created, sending")
 
-    send_email(html, receipt_id)
+    send_email(html, image_filename)
 
     print("Email sent")
 
@@ -79,16 +87,14 @@ def load_smtp_credentials():
         params[SMTP_PASSWORD_PARAM]
     )
     
-def download_csv(bucket, key):
+def download_json(bucket, key):
     response = s3.get_object(
         Bucket=bucket,
         Key=key
     )
+    body = response["Body"].read()
 
-    content = response["Body"].read().decode("utf-8-sig")
-    reader = csv.DictReader(content.splitlines())
-    rows = list(reader)
-    return rows
+    return json.loads(body)
 
 def download_image_base64(bucket, key):
 
@@ -101,17 +107,18 @@ def download_image_base64(bucket, key):
     encoded = base64.b64encode(image_bytes).decode("utf-8")
     return encoded
 
-def build_html(receipt_id, store, date, total, items, image_base64):
+def build_html(store, date, document_type, category, total, items, image_base64):
     rows_html = ""
 
     for item in items:
 
         rows_html += f"""
         <tr>
-            <td>{item['product']}</td>
-            <td>{item['quantity']}</td>
-            <td>{item['unit_price']}</td>
-            <td>{item['total']}</td>
+            <td>{item['normalized_name']}</td>
+            <td>{item['unit']}</td>
+            <td>{format_pln_decimal(item['unit_price'])} zł</td>
+            <td>{item['amount']}</td>
+            <td>{format_pln_decimal(item['price'])} zł</td>
         </tr>
         """
 
@@ -119,22 +126,24 @@ def build_html(receipt_id, store, date, total, items, image_base64):
     <html>
     <body>
 
-    <h1>Skaner paragonów, wersja 1 (Textract)</h1>
+    <h1>Skaner paragonów, wersja 2 (ChatGPT)</h1>
     <h2>Paragon przetworzony</h2>
 
     <p><b>Sklep:</b> {store}</p>
-    <p><b>Data:</b> {date}</p>
-    <p><b>Kwota:</b> {total}</p>
-    <p><b>ID:</b> {receipt_id}</p>
-
+    <p><b>Data:</b> {date.replace("T", " ")}</p>
+    <p><b>Typ dokumentu:</b> {document_type}</p>
+    <p><b>Kategoria:</b> {category}</p>
+    <p><b>Kwota:</b> {format_pln_decimal(total)} zł</p>
+    
     <h3>Pozycje</h3>
 
     <table border="1" cellpadding="5" cellspacing="0">
         <tr>
-            <th>Produkt</th>
-            <th>Ilość</th>
+            <th>Produkt/usługa</th>
+            <th>Jednostka</th>
+            <th>Cena jednostkowa</th>
+            <th>Ilość/liczba</th>
             <th>Cena</th>
-            <th>Razem</th>
         </tr>
 
         {rows_html}
@@ -157,7 +166,6 @@ def build_html_with_error(error_message):
     <html>
     <body>
 
-    <h1>Rezultat przetwarzania przez pipeline w wersji 1 (AWS Textract)</h1>
     <h2>Błąd przetwarzania paragonu</h2>
 
     <p><b>Błąd:</b> {error_message}</p>
@@ -168,16 +176,16 @@ def build_html_with_error(error_message):
 
     return html
 
-def send_email(html, receipt_id):
-    return send_email_via_smtp(html, receipt_id)
+def send_email(html, document_id):
+    return send_email_via_smtp(html, document_id)
 
-def send_email_via_smtp(html, receipt_id, attachment_bytes=None, filename=None):
+def send_email_via_smtp(html, document_id, attachment_bytes=None, filename=None):
 
     smtp_username, smtp_password = load_smtp_credentials();
 
     msg = EmailMessage()
 
-    msg["Subject"] = f"[Paragony, v.1] Paragon przetworzony ({receipt_id})"
+    msg["Subject"] = f"[Paragony, v.2] Dokument przetworzony ({document_id})"
     msg["From"] = smtp_username
     msg["To"] = ", ".join(RECIPIENTS)
 
@@ -199,7 +207,7 @@ def send_email_via_smtp(html, receipt_id, attachment_bytes=None, filename=None):
         smtp.login(smtp_username, smtp_password)
         smtp.send_message(msg)
 
-def send_email_via_sns(html, receipt_id):
+def send_email_via_sns(html, document_id):
     ses.send_email(
         Source=SES_SENDER,
         Destination={
@@ -207,7 +215,7 @@ def send_email_via_sns(html, receipt_id):
         },
         Message={
             "Subject": {
-                "Data": f"Paragon przetworzony ({receipt_id})"
+                "Data": f"[ChatGPT] Dokument przetworzony ({document_id})"
             },
             "Body": {
                 "Html": {
@@ -216,3 +224,15 @@ def send_email_via_sns(html, receipt_id):
             }
         }
     )
+
+def format_pln_decimal(value) -> str:
+    if value is None:
+        return ""
+
+    try:
+        number = Decimal(str(value))
+    except (InvalidOperation, ValueError, TypeError):
+        return ""
+
+    formatted = f"{number:,.2f}"
+    return formatted.replace(",", "X").replace(".", ",").replace("X", " ")    

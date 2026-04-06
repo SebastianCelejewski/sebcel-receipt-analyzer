@@ -119,6 +119,7 @@ package-functions:
 	cd backend/functions/csv_exporter && zip -r ../../../$(BUILD_DIR)/csv_exporter.zip .
 	cd backend/functions/upload_url_generator && zip -r ../../../$(BUILD_DIR)/upload_url_generator.zip .
 	cd backend/functions/receipt_mailer && zip -r ../../../$(BUILD_DIR)/receipt_mailer.zip .
+	cd backend/functions/report_sender && zip -r ../../../$(BUILD_DIR)/report_sender.zip .
 
 build-pwa:
 	@echo "[build-pwa]"
