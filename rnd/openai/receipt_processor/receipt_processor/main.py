@@ -34,6 +34,8 @@ def process_file(path, summary_writer, details_writer):
     dir_path = os.path.dirname(path)
     filename = os.path.basename(path)
     file_extension = os.path.splitext(path)[1].lower()
+    if file_extension.startswith("."):
+        file_extension = file_extension[1:]
     print(f"Processing {filename}")
 
     response = call_openai(path)

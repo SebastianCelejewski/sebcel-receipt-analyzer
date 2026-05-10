@@ -25,11 +25,11 @@ resource "aws_sns_topic_policy" "allow_s3" {
   })
 }
 
-resource "aws_sns_topic_subscription" "textract" {
-  topic_arn = aws_sns_topic.receipt_uploaded.arn
-  protocol  = "lambda"
-  endpoint  = aws_lambda_function.textract_analyzer_function.arn
-}
+// resource "aws_sns_topic_subscription" "textract" {
+//   topic_arn = aws_sns_topic.receipt_uploaded.arn
+//   protocol  = "lambda"
+//   endpoint  = aws_lambda_function.textract_analyzer_function.arn
+// }
 
 resource "aws_sns_topic_subscription" "openai" {
   topic_arn = aws_sns_topic.receipt_uploaded.arn

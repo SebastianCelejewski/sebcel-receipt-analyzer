@@ -1,6 +1,8 @@
+import io
 import os
 import base64
 import email
+from pdf2image import convert_from_path
 
 def encode_file_to_base64(path):
     with open(path, "rb") as f:
@@ -16,26 +18,31 @@ def handle_image(path):
         "image_url": f"data:image/jpeg;base64,{image_base64}"
     }]
 
-def handle_pdf(path):
+def handle_pdf(path, max_pages=5):
     print(f"- handling pdf {path}")
-    from pdf2image import convert_from_path
-    import io
 
-    images = convert_from_path(path, first_page=1, last_page=1)
+    images = convert_from_path(path)
 
-    if not images:
-        return []
+    result = []
 
-    buffer = io.BytesIO()
-    images[0].save(buffer, format="JPEG")
+    for i, img in enumerate(images):
+        if i >= max_pages:
+            print(f"- truncated to {max_pages} pages")
+            break
 
-    image_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
-    print(f"- image data size: {len(image_base64)}")
+        buffer = io.BytesIO()
+        img.save(buffer, format="JPEG")
 
-    return [{
-        "type": "input_image",
-        "image_url": f"data:image/jpeg;base64,{image_base64}"
-    }]
+        image_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
+
+        print(f"- page {i+1}, size: {len(image_base64)}")
+
+        result.append({
+            "type": "input_image",
+            "image_url": f"data:image/jpeg;base64,{image_base64}"
+        })
+
+    return result
 
 def handle_eml(path):
     print(f"- handling e-mail {path}")
@@ -61,15 +68,17 @@ def handle_eml(path):
 def build_content_for_file(path):
     print(f"- path: {path}")
     ext = os.path.splitext(path)[1].lower()
+    if ext.startswith("."):
+        ext = ext[1:]
     print(f"- ext: {ext}")
 
-    if ext in [".jpg", ".jpeg", ".png"]:
+    if ext in ["jpg", "jpeg", "png"]:
         return handle_image(path)
 
-    if ext == ".pdf":
+    if ext == "pdf":
         return handle_pdf(path)
 
-    if ext == ".eml":
+    if ext == "eml":
         return handle_eml(path)
 
     raise ValueError(f"Unsupported file type: {ext}")    

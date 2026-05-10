@@ -6,9 +6,9 @@ import unicodedata
 from datetime import datetime
 
 SUPPORTED_EXTENSIONS = {
-    ".jpg", ".jpeg", ".png",
-    ".pdf",
-    ".eml"
+    "jpg", "jpeg", "png",
+    "pdf",
+    "eml"
 }
 
 def list_input_files(folder):
@@ -17,6 +17,8 @@ def list_input_files(folder):
     for root, dirs, files in os.walk(folder):
         for file in files:
             ext = os.path.splitext(file)[1].lower()
+            if ext.startswith("."):
+                ext = ext[1:]
 
             if ext in SUPPORTED_EXTENSIONS:
                 result.append(os.path.join(root, file))
