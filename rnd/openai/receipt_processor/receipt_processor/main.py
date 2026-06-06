@@ -14,7 +14,10 @@ from receipt_processor.file_utils import (
     encode_image,
     build_filename,
     safe_rename,
-    generate_csv_filenames
+    generate_csv_filenames,
+    has_sidecar,
+    save_sidecar,
+    rename_sidecar,
 )
 from receipt_processor.config import SUMMARY_CSV_HEADERS, DETAILS_CSV_HEADERS
 
@@ -36,6 +39,11 @@ def process_file(path, summary_writer, details_writer):
     file_extension = os.path.splitext(path)[1].lower()
     if file_extension.startswith("."):
         file_extension = file_extension[1:]
+
+    if has_sidecar(path):
+        print(f"Skipping {filename} (already processed)")
+        return
+
     print(f"Processing {filename}")
 
     response = call_openai(path)
@@ -43,6 +51,11 @@ def process_file(path, summary_writer, details_writer):
     data = parse_response(response)
     if not data:
         return
+
+    if "datetime" in data and data["datetime"]:
+        data["datetime"] = data["datetime"].replace("T", " ")
+
+    save_sidecar(path, data)
 
     write_csv_row(summary_writer, data)
 
@@ -53,6 +66,7 @@ def process_file(path, summary_writer, details_writer):
     new_path = os.path.join(dir_path, new_name)
 
     final_path = safe_rename(path, new_path)
+    rename_sidecar(path, final_path)
     print("->", final_path)
 
 def main():

@@ -8,3 +8,4 @@ dependencies = [
 
 [project.scripts]
 receipt-process = "receipt_processor.main:main"
+receipt-export = "receipt_processor.export:main"

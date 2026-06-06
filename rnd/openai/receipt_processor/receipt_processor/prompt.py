@@ -56,7 +56,7 @@ OUTPUT FORMAT (STRICT JSON ONLY)
 --------------------------------
 
 {
-  "datetime": "YYYY-MM-DDTHH:MM",
+  "datetime": "YYYY-MM-DD HH:MM",
   "store": "string",
   "document_type": "string",
   "total": number,
