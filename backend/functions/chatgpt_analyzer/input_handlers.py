@@ -26,20 +26,24 @@ def handle_image(file, file_content_type):
         "image_url": f"data:{file_content_type};base64,{image_base64}"
     }]
 
-def handle_pdf(file):
-    images = []
-
+def handle_pdf(file, max_pages=5):
     images = pdf_to_images(file)
 
-    if not images:
-        return []
+    result = []
 
-    image_base64 = base64.b64encode(images[0]).decode("utf-8")
+    for i, img_bytes in enumerate(images):
+        if i >= max_pages:
+            print(f"- truncated to {max_pages} pages")
+            break
 
-    return [{
-        "type": "input_image",
-        "image_url": f"data:image/jpeg;base64,{image_base64}"
-    }]
+        image_base64 = base64.b64encode(img_bytes).decode("utf-8")
+
+        result.append({
+            "type": "input_image",
+            "image_url": f"data:image/jpeg;base64,{image_base64}"
+        })
+
+    return result
 
 def handle_eml(file):
     msg = email.message_from_file(file)
