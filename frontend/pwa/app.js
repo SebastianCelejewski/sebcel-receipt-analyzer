@@ -1,8 +1,18 @@
-import { render as renderFn, getRotatedCanvas } from "./render.js"
-import { rotateCrop90 } from "./geometry.js"
-import { startCamera, toggleTorch, turnOffTorch, bringBackTorch, takePhoto } from "./camerab.js"
-import { startDrag, onDrag, endDrag } from "./input.js"
-import { initUpload, upload } from "./upload.js"
+// Cache-busting note: the build replaces __VERSION__ with the build's
+// timestamped version (see Makefile build-pwa). index.html already does this
+// for app.js's own <script> URL, but ES module imports are resolved by their
+// literal specifier strings - the browser/CDN can keep serving a stale cached
+// copy of e.g. camerab.js even after a fresh app.js?v=... is fetched, since
+// "./camerab.js" never changes. Appending the same ?v=__VERSION__ here forces
+// each module to be re-fetched whenever a new version is deployed, so a
+// version bump can never leave app.js paired with stale sibling modules
+// (which would otherwise surface as "module does not provide an export"
+// errors and a silently broken app on devices with cached assets).
+import { render as renderFn, getRotatedCanvas } from "./render.js?v=__VERSION__"
+import { rotateCrop90 } from "./geometry.js?v=__VERSION__"
+import { startCamera, toggleTorch, turnOffTorch, bringBackTorch, takePhoto, listCameras, getRememberedCameraId } from "./camerab.js?v=__VERSION__"
+import { startDrag, onDrag, endDrag } from "./input.js?v=__VERSION__"
+import { initUpload, upload } from "./upload.js?v=__VERSION__"
 
 let state = "camera"
 let renderScheduled = false
@@ -76,12 +86,67 @@ function setStatus(statusText) {
   status.innerHTML = statusText
 }
 
-function initApp() {
+async function initApp() {
   initUpload()
   initCanvas()
-  startCamera()
+  initCameraSelect()
+
+  // Open the previously-picked camera (if any) right away, so a returning
+  // user lands on the lens they already chose. The first call also requests
+  // camera permission, which the browser needs before it will reveal device
+  // labels - required to populate the picker with anything more useful than
+  // "Camera 1", "Camera 2", ...
+  await startCamera(getRememberedCameraId())
+  await populateCameraSelect()
+
   loadVersion()
   switchToCameraMode()
+}
+
+function initCameraSelect() {
+  document.getElementById("cameraSelect").addEventListener("change", handleCameraSelected)
+}
+
+async function handleCameraSelected(e) {
+  await startCamera(e.target.value)
+}
+
+// Phones often expose multiple rear ("environment") cameras as separate
+// devices (main / ultra-wide / telephoto lenses), and the browser's
+// automatic pick isn't always the highest-resolution one. Rather than guess,
+// let the user choose explicitly - the choice is then remembered (see
+// camerab.js) so they don't have to repeat it on every visit.
+async function populateCameraSelect() {
+  const select = document.getElementById("cameraSelect")
+
+  let cameras = []
+  try {
+    cameras = await listCameras()
+  }
+  catch (err) {
+    console.error(err)
+  }
+
+  if (cameras.length <= 1) {
+    select.classList.add("hidden")
+    return
+  }
+
+  select.innerHTML = ""
+
+  cameras.forEach((camera, index) => {
+    const option = document.createElement("option")
+    option.value = camera.deviceId
+    option.textContent = camera.label || `Kamera ${index + 1}`
+    select.appendChild(option)
+  })
+
+  const remembered = getRememberedCameraId()
+  if (remembered && cameras.some((camera) => camera.deviceId === remembered)) {
+    select.value = remembered
+  }
+
+  select.classList.remove("hidden")
 }
 
 function initCanvas() {

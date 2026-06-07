@@ -61,8 +61,15 @@ canvas {
   pointer-events: none;
 }
 
-.controlsContainer button {
+.controlsContainer button,
+.controlsContainer select {
   pointer-events: auto;
+}
+
+.controlsContainer select {
+  font-size: 16px;
+  margin: 10px;
+  padding: 4px;
 }
 
 .controlsContainer input {

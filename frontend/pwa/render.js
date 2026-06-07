@@ -1,4 +1,5 @@
-import { getHandles } from "./geometry.js"
+// See app.js for why local module imports are versioned with ?v=__VERSION__.
+import { getHandles } from "./geometry.js?v=__VERSION__"
 
 export function render(ctx, canvas, state) {
   drawCapturedImage(ctx, canvas, state)

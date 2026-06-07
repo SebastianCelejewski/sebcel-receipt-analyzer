@@ -129,8 +129,14 @@ build-pwa:
 	# Copy src files to build dir
 	cp -r $(PWA_SRC_DIR)/* $(PWA_BUILD_DIR)/
 
-	# Replace version
-	sed -i 's/__VERSION__/$(VERSION)/g' $(PWA_BUILD_DIR)/index.html
+	# Replace version. This must cover every file containing the __VERSION__
+	# placeholder, not just index.html: app.js and its sibling ES modules
+	# reference each other via "?v=__VERSION__"-suffixed import specifiers so
+	# that a version bump invalidates ALL of them together (otherwise the
+	# browser/CDN can keep serving a stale cached module next to a freshly
+	# fetched app.js, which breaks the app - e.g. "module does not provide an
+	# export" - on devices with cached assets).
+	sed -i 's/__VERSION__/$(VERSION)/g' $(PWA_BUILD_DIR)/index.html $(PWA_BUILD_DIR)/*.js
 
 	# Pick config
 	cp $(PWA_SRC_DIR)/config.$(ENV).js $(PWA_BUILD_DIR)/config.js

@@ -1,22 +1,55 @@
 let videoStream = null
 let torchEnabled = false
 
-export async function startCamera() {
-  try {
-    videoStream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: { ideal: "environment" },
+// Some phones expose several rear ("environment") cameras as separate
+// devices (e.g. main + ultra-wide + telephoto lenses). `facingMode:
+// "environment"` lets the browser pick one for us, and on some devices it
+// picks a lower-resolution lens than the user would expect. Remembering the
+// last manually-picked camera lets us reopen the same (good) one next time,
+// and re-select it automatically without asking again.
+const SELECTED_CAMERA_STORAGE_KEY = "selected_camera_device_id"
 
-        width:  { ideal: 1920, max: 2560 },
-        height: { ideal: 1080, max: 1440 }
-      }
-    })
+export function getRememberedCameraId() {
+  return localStorage.getItem(SELECTED_CAMERA_STORAGE_KEY)
+}
+
+// Returns the available video-input devices. Device labels are only
+// populated by the browser once camera permission has been granted, so this
+// is best called after the first startCamera() resolves.
+export async function listCameras() {
+  const devices = await navigator.mediaDevices.enumerateDevices()
+  return devices.filter((device) => device.kind === "videoinput")
+}
+
+export async function startCamera(deviceId) {
+  try {
+    if (videoStream) {
+      videoStream.getTracks().forEach((track) => track.stop())
+    }
+
+    const resolutionConstraints = {
+      width:  { ideal: 1920, max: 2560 },
+      height: { ideal: 1080, max: 1440 }
+    }
+
+    const videoConstraints = deviceId
+      ? { deviceId: { exact: deviceId }, ...resolutionConstraints }
+      : { facingMode: { ideal: "environment" }, ...resolutionConstraints }
+
+    videoStream = await navigator.mediaDevices.getUserMedia({ video: videoConstraints })
 
     const video = document.getElementById("camera")
     video.srcObject = videoStream
 
     const track = videoStream.getVideoTracks()[0]
-    document.getElementById("resolution").innerHTML = track.getSettings().width + "x" + track.getSettings().height;
+    const settings = track.getSettings()
+
+    const usedDeviceId = settings.deviceId || deviceId || null
+    if (usedDeviceId) {
+      localStorage.setItem(SELECTED_CAMERA_STORAGE_KEY, usedDeviceId)
+    }
+
+    document.getElementById("resolution").innerHTML = settings.width + "x" + settings.height;
 
     await track.applyConstraints({
       advanced: [

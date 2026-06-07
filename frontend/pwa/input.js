@@ -1,4 +1,5 @@
-import { getHandles, updateCropFromDrag } from "./geometry.js"
+// See app.js for why local module imports are versioned with ?v=__VERSION__.
+import { getHandles, updateCropFromDrag } from "./geometry.js?v=__VERSION__"
 
 export function startDrag(e, state, canvas, requestRender) {
   const pos = getPos(e, canvas)
