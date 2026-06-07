@@ -14,7 +14,7 @@ PWA_BUCKET = sebcel-receipt-analyzer-uploader-$(ENV)
 PWA_SRC_DIR = frontend/pwa
 PWA_BUILD_DIR = frontend/pwa-build
 
-VERSION_BASE=0.3.1
+VERSION_BASE=0.3.2
 BUILD_TIME=$(shell date +"%Y-%m-%d_%H-%M-%S")
 VERSION=$(VERSION_BASE).$(BUILD_TIME)
 
