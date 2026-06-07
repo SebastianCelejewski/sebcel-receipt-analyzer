@@ -29,7 +29,9 @@ def handler(event, context):
             }
         )
 
-        image_filename = os.path.basename(key)
+        # Path relative to the "uploads/" prefix (e.g. "2026-06-07/user_..._uuid.jpg"),
+        # used downstream to locate the original image in the raw bucket.
+        image_filename = key[len("uploads/"):] if key.startswith("uploads/") else os.path.basename(key)
 
         response = {
             "image_filename": image_filename,

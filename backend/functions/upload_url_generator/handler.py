@@ -14,9 +14,11 @@ def handler(event, context):
 
     user = email.split("@")[0].replace(".", "_")
 
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    now = datetime.now()
+    timestamp = now.strftime("%Y-%m-%d_%H-%M-%S")
+    date_folder = now.strftime("%Y-%m-%d")
 
-    key = f"uploads/{user}_{timestamp}_{uuid.uuid4().hex}.jpg"
+    key = f"uploads/{date_folder}/{user}_{timestamp}_{uuid.uuid4().hex}.jpg"
 
     url = s3.generate_presigned_url(
         ClientMethod="put_object",
