@@ -23,48 +23,84 @@ The project focuses on practical automation of receipt processing rather than ma
 
 The system consists of three main components:
 
-## 1. Receipt Capture
+## 1. Receipt Capture (PWA)
 
-Users take photos of receipts using a simple mobile or web interface.
+`frontend/pwa` — a Progressive Web App used to capture photos of receipts on a
+mobile or desktop device.
 
-The application uploads images directly to cloud storage.
+The app authenticates the user (Cognito), requests a presigned upload URL from
+the backend, and uploads the image directly to cloud storage.
 
 Typical workflow:
 
-User → Photo of receipt → Upload to S3
+User → Photo of receipt → Upload to S3 (raw bucket)
 
 ---
 
-## 2. Processing Pipeline
+## 2. Cloud Processing Pipeline
 
-A serverless backend automatically processes uploaded receipts.
+`backend/functions` — a serverless backend (AWS Lambda) that automatically
+processes uploaded receipts: storage, AI-based data extraction, JSON
+generation, and email notifications.
 
 Typical pipeline:
 
-eceipt image (S3)
+Receipt image (S3 raw bucket)
 ↓
-AWS Lambda trigger
+AWS Lambda trigger (via SNS)
 ↓
-Amazon Textract (OCR + receipt structure)
+ChatGPT Vision analysis (Polish-aware prompt) / Amazon Textract (OCR)
 ↓
-Normalization / AI parsing
+Structured JSON saved to S3 (processed bucket)
 ↓
-Structured JSON
-↓
-CSV dataset generation
+Email notification with the extracted data (receipt_mailer / report_sender)
 
 
 Technologies used:
 
-- AWS S3 — receipt storage
+- AWS S3 — receipt and result storage
 - AWS Lambda — serverless processing
-- Amazon Textract — receipt OCR and extraction
-- AI models — normalization and classification
-- CSV / JSON — output data format
+- OpenAI GPT-4 Vision — receipt/invoice parsing (primary)
+- Amazon Textract — receipt OCR and extraction (alternative path)
+- AWS SES/SMTP — email notifications
+- JSON — structured output format
 
 ---
 
-## 3. Expense Analysis
+## 3. Local Reporting Tools (CLI)
+
+`cli/receipt_processor` — a console application that turns the structured JSON
+data into CSV datasets ready for analysis (e.g. in Excel).
+
+This currently runs locally (on the household's computer) rather than in the
+cloud, because in practice the resulting datasets are consumed locally (in
+Excel) and downloading/merging cloud-generated CSVs by hand proved
+inconvenient. Running the report generation locally also makes it trivial to
+iterate on normalization/categorization rules without redeploying Lambdas.
+
+Typical workflow:
+
+```
+receipt-upload invoice1.pdf invoice2.pdf  # send PDF invoices (e.g. received by e-mail) to the cloud raw bucket,
+                                           # the same way the PWA uploads photos, so they enter the same pipeline
+receipt-download 2026-06-07                # fetch source files + JSON results from S3 for a given date
+receipt-process .                          # analyze any new files (skips files already processed in the cloud)
+receipt-report .                           # build CSV summary/details reports from JSON data
+```
+
+The tool reuses the structured JSON produced by the cloud pipeline whenever
+available (matching files by name), so OpenAI is only called for files that
+haven't been analyzed yet — avoiding duplicate API costs.
+
+> **Future direction:** CSV/report generation may eventually move into the
+> cloud pipeline as well (see `csv_exporter` Lambda), once a more convenient
+> way of consuming the resulting datasets locally (e.g. automatic sync,
+> dashboards) is in place. For now, the CLI is the practical, low-friction
+> choice for this stage.
+
+---
+
+## 4. Expense Analysis
 
 Processed datasets can be analyzed using standard tools such as:
 
@@ -98,12 +134,16 @@ Example structure:
 
 # Typical Workflow
 
-1. Household member takes a photo of a receipt
-2. Image is uploaded to cloud storage
-3. Processing pipeline extracts purchase data
-4. Items are normalized and categorized
-5. CSV dataset is generated
-6. Data is analyzed in Excel or other tools
+1. Household member takes a photo of a receipt using the PWA
+2. Image is uploaded to cloud storage (S3 raw bucket)
+3. The cloud processing pipeline extracts purchase data (OpenAI / Textract)
+   and stores structured JSON in the processed bucket; an email notification
+   is sent with the extracted data
+4. Periodically (e.g. weekly), the household downloads that period's source
+   files and JSON results using the `cli/receipt_processor` CLI
+   (`receipt-download`), runs analysis on any new files (`receipt-process`),
+   and generates CSV reports (`receipt-report`)
+5. Data is analyzed in Excel or other tools
 
 ---
 

@@ -41,6 +41,9 @@ def main():
         for sidecar in sorted(sidecars):
             print(f"Exporting {os.path.basename(sidecar)}")
             data = load_sidecar(sidecar)
+            if not data:
+                print(f"Skipping {os.path.basename(sidecar)} (could not parse sidecar data)")
+                continue
             write_csv_row(summary_writer, data)
             items = extract_items(data) or []
             append_items_to_csv(details_writer, data, items)

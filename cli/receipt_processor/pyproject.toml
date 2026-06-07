@@ -1,0 +1,14 @@
+[project]
+name = "receipt-processor"
+version = "0.2.2"
+description = "Receipt processing CLI tool"
+dependencies = [
+    "openai",
+    "boto3"
+]
+
+[project.scripts]
+receipt-upload = "receipt_processor.upload_data:main"
+receipt-download = "receipt_processor.download_data:main"
+receipt-process = "receipt_processor.main:main"
+receipt-report = "receipt_processor.export:main"

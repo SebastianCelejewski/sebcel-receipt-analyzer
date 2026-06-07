@@ -5,6 +5,7 @@ import uuid
 import re
 import unicodedata
 from datetime import datetime
+from receipt_processor.parsing import extract_json
 
 SUPPORTED_EXTENSIONS = {
     "jpg", "jpeg", "png",
@@ -59,7 +60,13 @@ def safe_rename(src, dst):
     return new_path
 
 def sidecar_path(file_path):
-    return file_path + ".json"
+    # Use the base name without the original extension, e.g. "receipt.json"
+    # rather than "receipt.jpg.json". This matches the naming convention used
+    # by the chatgpt_analyzer Lambda in the cloud (e.g. "2026-06-07_12.30_Biedronka.jpg"
+    # + "2026-06-07_12.30_Biedronka.json"), so JSON files downloaded from S3
+    # alongside their images are recognized as sidecars without renaming.
+    base, _ = os.path.splitext(file_path)
+    return base + ".json"
 
 def has_sidecar(file_path):
     return os.path.exists(sidecar_path(file_path))
@@ -70,7 +77,29 @@ def save_sidecar(file_path, data):
 
 def load_sidecar(file_path):
     with open(sidecar_path(file_path), "r", encoding="utf-8") as f:
-        return json.load(f)
+        raw = json.load(f)
+    return normalize_sidecar_data(raw)
+
+def normalize_sidecar_data(raw):
+    """
+    Sidecars can come in two shapes:
+
+    - Local format (produced by this tool): the parsed receipt data directly,
+      e.g. {"datetime": ..., "store": ..., "items": [...]}
+    - Cloud format (downloaded from S3, produced by the chatgpt_analyzer Lambda):
+      {"image_filename": "...", "chatgpt": "<raw JSON text from OpenAI>"}
+
+    This normalizes both into the parsed receipt data dict, so downloaded
+    cloud JSONs work as drop-in sidecars without any conversion step.
+    """
+    if isinstance(raw, dict) and "chatgpt" in raw and "image_filename" in raw:
+        try:
+            return json.loads(extract_json(raw["chatgpt"]))
+        except Exception:
+            print("JSON parse error in cloud sidecar 'chatgpt' field:", raw.get("chatgpt"))
+            return None
+
+    return raw
 
 def rename_sidecar(old_file_path, new_file_path):
     old_sc = sidecar_path(old_file_path)

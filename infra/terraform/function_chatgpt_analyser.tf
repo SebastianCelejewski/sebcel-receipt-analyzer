@@ -70,7 +70,9 @@ resource "aws_iam_role_policy" "chatgpt_analyser_function_policy" {
       {
         Effect = "Allow"
         Action = [
-          "s3:GetObject"
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject"
         ]
         Resource = "${aws_s3_bucket.raw_receipts.arn}/*"
       },
