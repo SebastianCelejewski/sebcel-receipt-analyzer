@@ -16,6 +16,15 @@ openAiClient = None
 PROCESSED_BUCKET = os.environ.get("PROCESSED_BUCKET")
 OPENAI_API_KEY_PARAMETER_NAME = os.environ.get("OPENAI_API_KEY_PARAMETER_NAME")
 
+# Marker written as S3 object metadata on the copy created by rename_source_file().
+# The raw bucket's S3 notification has no prefix/suffix filter, so that copy
+# triggers a fresh ObjectCreated event which would otherwise be picked up by
+# this very function again - causing a duplicate OpenAI call, a duplicate JSON
+# in the processed bucket, and a duplicate notification e-mail. Recognising
+# this marker lets the handler skip such "self-triggered" events outright.
+RENAME_MARKER_KEY = "renamed-by"
+RENAME_MARKER_VALUE = "chatgpt-analyzer"
+
 def handler(event, context):
     try:
         sns_record = event["Records"][0]
@@ -31,6 +40,19 @@ def handler(event, context):
         print(f"Processing file: s3://{input_bucket}/{input_key}")
 
         get_object_response = s3client.get_object(Bucket=input_bucket, Key=input_key)
+
+        # Skip files that are themselves the result of a rename performed by
+        # this function (see RENAME_MARKER_KEY above) - they were already
+        # analyzed under their original name and don't need reprocessing.
+        object_metadata = get_object_response.get("Metadata", {})
+        if object_metadata.get(RENAME_MARKER_KEY) == RENAME_MARKER_VALUE:
+            print(f"Skipping s3://{input_bucket}/{input_key}: "
+                  f"this object is a renamed copy of an already-processed receipt")
+            return {
+                "statusCode": 200,
+                "body": "Skipped: renamed copy of an already-processed receipt"
+            }
+
         input_file = get_object_response["Body"].read()
         input_file_content_type = get_object_response['ContentType']
 
@@ -114,7 +136,12 @@ def rename_source_file(bucket, source_key, date_folder, file_extension, chatgpt_
     s3client.copy_object(
         Bucket=bucket,
         CopySource={"Bucket": bucket, "Key": source_key},
-        Key=new_key
+        Key=new_key,
+        Metadata={
+            RENAME_MARKER_KEY: RENAME_MARKER_VALUE,
+            "original-key": source_key
+        },
+        MetadataDirective="REPLACE"
     )
     s3client.delete_object(Bucket=bucket, Key=source_key)
 
