@@ -78,7 +78,34 @@ Excel) and downloading/merging cloud-generated CSVs by hand proved
 inconvenient. Running the report generation locally also makes it trivial to
 iterate on normalization/categorization rules without redeploying Lambdas.
 
-Typical workflow:
+### Installation
+
+The CLI is a regular Python package (`cli/receipt_processor`) that registers
+its commands as console scripts. To install it (e.g. on Windows, so the
+commands are available globally as `receipt-upload`, `receipt-download`,
+`receipt-process`, `receipt-report`):
+
+```sh
+pip install cli/receipt_processor
+```
+
+For active development, install it in editable mode instead — code changes
+take effect immediately without reinstalling:
+
+```sh
+pip install -e cli/receipt_processor
+```
+
+Requirements:
+
+- Python 3.11+
+- An `OPENAI_API_KEY` available to the `openai` SDK (used by `receipt-process`
+  for files that haven't been analyzed in the cloud yet)
+- AWS credentials configured (e.g. via `aws configure` / `AWS_PROFILE`) with
+  access to the raw and processed S3 buckets — used by `receipt-upload` and
+  `receipt-download`
+
+### Typical workflow
 
 ```
 receipt-upload invoice1.pdf invoice2.pdf  # send PDF invoices (e.g. received by e-mail) to the cloud raw bucket,
@@ -91,6 +118,18 @@ receipt-report .                           # build CSV summary/details reports f
 The tool reuses the structured JSON produced by the cloud pipeline whenever
 available (matching files by name), so OpenAI is only called for files that
 haven't been analyzed yet — avoiding duplicate API costs.
+
+### Commands
+
+| Command | Purpose | Example |
+|---|---|---|
+| `receipt-upload` | Upload local files (e.g. PDF invoices) to the cloud raw bucket | `receipt-upload --env prod invoice1.pdf invoice2.pdf` |
+| `receipt-download` | Download source files + JSON results for a given date from S3 | `receipt-download 2026-06-07 --env prod` |
+| `receipt-process` | Analyze receipts in a folder (calls OpenAI; skips files that already have a JSON result, whether produced locally or in the cloud) | `receipt-process .` |
+| `receipt-report` | Build CSV summary/details reports from JSON data in a folder | `receipt-report .` |
+
+Run any command with `--help` to see its full set of options (e.g. `--env`,
+`--output`, `--user`).
 
 > **Future direction:** CSV/report generation may eventually move into the
 > cloud pipeline as well (see `csv_exporter` Lambda), once a more convenient
