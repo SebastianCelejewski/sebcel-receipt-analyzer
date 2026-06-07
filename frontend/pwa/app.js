@@ -85,17 +85,50 @@ function switchToCameraMode() {
   editorState._rotatedKey = null
   setState("camera")
   bringBackTorch()
+  attemptVideoPlay()
+}
 
-  // play() returns a promise that can reject with NotAllowedError on browsers
-  // that block autoplay before any user interaction (e.g. the very first call
-  // from initApp() on page load). The <video> is muted precisely so autoplay
-  // is generally permitted, but we still guard against the rejection becoming
-  // an unhandled promise rejection / crashing this function on stricter
-  // browsers - the stream stays attached and a later play() (e.g. triggered
-  // by a user tapping a button) will succeed.
+// play() returns a promise that can reject with NotAllowedError on browsers
+// that block autoplay before any user interaction - notably the very first
+// call from initApp() on page load, before the user has tapped anything.
+// The <video> is muted precisely so autoplay is generally permitted, but
+// some browsers are still strict about that very first play(). If it's
+// rejected, we don't just log it (that alone leaves the stream permanently
+// paused/blank - "logging an intent to retry" isn't the same as retrying);
+// we arm a one-shot listener for the user's next interaction and retry
+// play() then, when the required user-activation is actually present.
+let playRetryArmed = false
+
+function attemptVideoPlay() {
   video.play().catch((err) => {
-    console.warn("video.play() was blocked - will retry on next user interaction", err)
+    console.warn("video.play() was blocked - arming retry on next user interaction", err)
+    armVideoPlayRetry()
   })
+}
+
+function armVideoPlayRetry() {
+  if (playRetryArmed) return
+  playRetryArmed = true
+
+  const retry = () => {
+    video.play()
+      .then(() => {
+        playRetryArmed = false
+        document.removeEventListener("pointerdown", retry)
+        document.removeEventListener("touchend", retry)
+        document.removeEventListener("click", retry)
+      })
+      .catch((err) => {
+        // Still blocked - stay armed and wait for a further interaction.
+        console.warn("video.play() retry was also blocked - will keep waiting for user interaction", err)
+        playRetryArmed = false
+        armVideoPlayRetry()
+      })
+  }
+
+  document.addEventListener("pointerdown", retry, { once: true })
+  document.addEventListener("touchend", retry, { once: true })
+  document.addEventListener("click", retry, { once: true })
 }
 
 function setStatus(statusText) {

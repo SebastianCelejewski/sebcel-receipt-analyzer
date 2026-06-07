@@ -129,7 +129,7 @@ export async function toggleTorch() {
     advanced: [{ torch: torchEnabled }]
   })
 
-  document.getElementById("torchBtn").innerText = torchEnabled ? "🔦 ON" : "🔦 OFF"
+  document.getElementById("torchButton").innerText = torchEnabled ? "🔦 ON" : "🔦 OFF"
 }
 
 export async function turnOffTorch() {
@@ -146,7 +146,7 @@ export async function turnOffTorch() {
     advanced: [{ torch: false }]
   })
 
-  document.getElementById("torchBtn").innerText = "🔦 OFF"
+  document.getElementById("torchButton").innerText = "🔦 OFF"
 }
 
 export async function bringBackTorch() {
@@ -163,7 +163,7 @@ export async function bringBackTorch() {
     advanced: [{ torch: torchEnabled }]
   })
 
-  document.getElementById("torchBtn").innerText = torchEnabled ? "🔦 ON" : "🔦 OFF"
+  document.getElementById("torchButton").innerText = torchEnabled ? "🔦 ON" : "🔦 OFF"
 }
 
 export function takePhoto(state) {
