@@ -17,18 +17,20 @@
   
   <div id="appInfo">
     <div id="resolution"></div>
-    <div id="version"></div>
+    <div id="version" title="Tap to show/hide debug log"></div>
   </div>
+
+  <div id="debugLog" class="hidden"></div>
 
   <!-- CAMERA -->
   <div id="cameraView" class="view">
     <div class="cameraContainer">
-      <video id="camera" autoplay playsinline></video>
+      <video id="camera" autoplay playsinline muted></video>
     </div>
 
     <div class="controlsContainer">
-      <select id="cameraSelect" class="hidden"></select>
       <button id="torchButton">🔦</button>
+      <button id="resolutionButton">🔍</button>
       <button id="takePhotoButton">📷</button>
     </div>
   </div>

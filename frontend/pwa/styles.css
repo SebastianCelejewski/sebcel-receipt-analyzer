@@ -61,15 +61,8 @@ canvas {
   pointer-events: none;
 }
 
-.controlsContainer button,
-.controlsContainer select {
+.controlsContainer button {
   pointer-events: auto;
-}
-
-.controlsContainer select {
-  font-size: 16px;
-  margin: 10px;
-  padding: 4px;
 }
 
 .controlsContainer input {
@@ -101,4 +94,39 @@ button {
   color: white;
   padding: 5px;
   font-size: 12px;
+}
+
+#version {
+  cursor: pointer;
+}
+
+#debugLog {
+  position: absolute;
+  top: 90px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.92);
+  color: #0f0;
+  font-family: monospace;
+  font-size: 11px;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+.debugLogEntry {
+  white-space: pre-wrap;
+  word-break: break-word;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 2px 0;
+}
+
+.debugLogEntry--error {
+  color: #ff5555;
+}
+
+.debugLogEntry--warn {
+  color: #ffcc00;
 }

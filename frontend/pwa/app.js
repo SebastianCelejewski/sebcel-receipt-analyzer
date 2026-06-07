@@ -10,9 +10,10 @@
 // errors and a silently broken app on devices with cached assets).
 import { render as renderFn, getRotatedCanvas } from "./render.js?v=__VERSION__"
 import { rotateCrop90 } from "./geometry.js?v=__VERSION__"
-import { startCamera, toggleTorch, turnOffTorch, bringBackTorch, takePhoto, listCameras, getRememberedCameraId } from "./camerab.js?v=__VERSION__"
+import { startCamera, cycleResolution, toggleTorch, turnOffTorch, bringBackTorch, takePhoto } from "./camerab.js?v=__VERSION__"
 import { startDrag, onDrag, endDrag } from "./input.js?v=__VERSION__"
 import { initUpload, upload } from "./upload.js?v=__VERSION__"
+import { initDebugLog } from "./debug.js?v=__VERSION__"
 
 let state = "camera"
 let renderScheduled = false
@@ -35,6 +36,7 @@ const editorState = {
 
 window.addEventListener("DOMContentLoaded", initApp)
 document.getElementById("torchButton").addEventListener("click", handleTorchButtonClicked)
+document.getElementById("resolutionButton").addEventListener("click", handleResolutionButtonClicked)
 document.getElementById("takePhotoButton").addEventListener("click", handleTakePhotoButtonClicked)
 document.getElementById("retakeButton").addEventListener("click", handleRetakeButtonClicked)
 document.getElementById("confirmButton").addEventListener("click", handleConfirmButtonClicked)
@@ -48,6 +50,10 @@ function handleRotationSliderMoved(e) {
 
 function handleTorchButtonClicked() {
   toggleTorch()
+}
+
+function handleResolutionButtonClicked() {
+  cycleResolution()
 }
 
 function handleTakePhotoButtonClicked() {
@@ -79,74 +85,30 @@ function switchToCameraMode() {
   editorState._rotatedKey = null
   setState("camera")
   bringBackTorch()
-  video.play()
+
+  // play() returns a promise that can reject with NotAllowedError on browsers
+  // that block autoplay before any user interaction (e.g. the very first call
+  // from initApp() on page load). The <video> is muted precisely so autoplay
+  // is generally permitted, but we still guard against the rejection becoming
+  // an unhandled promise rejection / crashing this function on stricter
+  // browsers - the stream stays attached and a later play() (e.g. triggered
+  // by a user tapping a button) will succeed.
+  video.play().catch((err) => {
+    console.warn("video.play() was blocked - will retry on next user interaction", err)
+  })
 }
 
 function setStatus(statusText) {
   status.innerHTML = statusText
 }
 
-async function initApp() {
+function initApp() {
+  initDebugLog()
   initUpload()
   initCanvas()
-  initCameraSelect()
-
-  // Open the previously-picked camera (if any) right away, so a returning
-  // user lands on the lens they already chose. The first call also requests
-  // camera permission, which the browser needs before it will reveal device
-  // labels - required to populate the picker with anything more useful than
-  // "Camera 1", "Camera 2", ...
-  await startCamera(getRememberedCameraId())
-  await populateCameraSelect()
-
+  startCamera()
   loadVersion()
   switchToCameraMode()
-}
-
-function initCameraSelect() {
-  document.getElementById("cameraSelect").addEventListener("change", handleCameraSelected)
-}
-
-async function handleCameraSelected(e) {
-  await startCamera(e.target.value)
-}
-
-// Phones often expose multiple rear ("environment") cameras as separate
-// devices (main / ultra-wide / telephoto lenses), and the browser's
-// automatic pick isn't always the highest-resolution one. Rather than guess,
-// let the user choose explicitly - the choice is then remembered (see
-// camerab.js) so they don't have to repeat it on every visit.
-async function populateCameraSelect() {
-  const select = document.getElementById("cameraSelect")
-
-  let cameras = []
-  try {
-    cameras = await listCameras()
-  }
-  catch (err) {
-    console.error(err)
-  }
-
-  if (cameras.length <= 1) {
-    select.classList.add("hidden")
-    return
-  }
-
-  select.innerHTML = ""
-
-  cameras.forEach((camera, index) => {
-    const option = document.createElement("option")
-    option.value = camera.deviceId
-    option.textContent = camera.label || `Kamera ${index + 1}`
-    select.appendChild(option)
-  })
-
-  const remembered = getRememberedCameraId()
-  if (remembered && cameras.some((camera) => camera.deviceId === remembered)) {
-    select.value = remembered
-  }
-
-  select.classList.remove("hidden")
 }
 
 function initCanvas() {
