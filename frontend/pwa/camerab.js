@@ -83,9 +83,16 @@ async function openCameraWithPreset(index) {
     currentResolutionIndex = index
     rememberResolutionIndex(index)
 
+    // Note: we deliberately show only the requested preset label here, not
+    // the actual track settings or a success/failure verdict. Devices can
+    // "succeed" and report whatever resolution was requested while still
+    // delivering a blank/stalled stream (see comment above on HAL quirks),
+    // so any "did it actually work" indicator we tried to derive in-page was
+    // misleading. The user can see for themselves whether the live preview
+    // is showing a real image - that's the only trustworthy signal.
+    document.getElementById("resolution").innerHTML = preset.label
+
     const track = videoStream.getVideoTracks()[0]
-    const settings = track.getSettings()
-    document.getElementById("resolution").innerHTML = `${preset.label} → ${settings.width}x${settings.height}`
 
     // Best-effort only: not all devices support continuous autofocus, and an
     // OverconstrainedError here must not be mistaken for the camera itself
@@ -102,8 +109,11 @@ async function openCameraWithPreset(index) {
     }
   }
   catch (err) {
+    // A genuine getUserMedia() failure (e.g. OverconstrainedError, permission
+    // denied) - as opposed to the "succeeded but produced a blank stream"
+    // case handled above, which we can't detect from in-page code at all.
     console.error("Could not start the camera with preset", preset, err)
-    document.getElementById("resolution").innerHTML = `${preset.label} → failed`
+    document.getElementById("resolution").innerHTML = `${preset.label} (error - see debug log)`
   }
 }
 
